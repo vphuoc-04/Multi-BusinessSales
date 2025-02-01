@@ -8,8 +8,16 @@ class DashboardScreen extends StatefulWidget{
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Text("Dashboard"),
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            children: [
+              Text("Dashboard")
+            ],
+          ),
+        )
+      ),
     );
   }
 }

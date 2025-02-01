@@ -10,7 +10,7 @@ import 'package:frontend/tokens/token.dart';
 import 'package:frontend/modules/users/auth/auth.dart';
 
 // Screens
-import 'package:frontend/screens/dashboard/dashboard_screen.dart';
+import 'package:frontend/screens/dashboard/layout_screen.dart';
 
 // Components
 import 'package:frontend/components/dashboard/login/login_button.dart';
@@ -24,6 +24,8 @@ class LoginScreen extends StatefulWidget{
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  int? id;
 
   final Auth auth = Auth();
 
@@ -58,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
+          MaterialPageRoute(builder: (context) => LayoutScreen(id: id!,)),
         );
 
         print('Login successful: Token: $token');

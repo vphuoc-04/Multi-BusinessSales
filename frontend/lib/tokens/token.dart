@@ -9,4 +9,12 @@ class Token {
     await set.setString(tokenKey, token);
     print("Token saved: $token");
   }
+
+  // Load token
+  static Future<String?> loadToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    print("Token loaded: $token");
+    return token;
+  }
 }
