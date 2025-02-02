@@ -12,4 +12,14 @@ class AuthRepository {
       }
     );
   }
+
+  // Logout
+  Future<dynamic> logout(String token) {
+    return api.get(
+      'auth/logout',
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
+    );
+  }
 }

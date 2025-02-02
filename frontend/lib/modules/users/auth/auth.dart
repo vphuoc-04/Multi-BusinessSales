@@ -16,7 +16,7 @@ class Auth {
 
       print("Data: $data");
 
-      if (data['user'] == null) {
+      if (data['data']['user'] == null) {
         print("Data is null.");
         return {
           'success': false,
@@ -24,8 +24,8 @@ class Auth {
         };
       } 
 
-      final token = data['token'];
-      final user = data['user'];
+      final token = data['data']['token'];
+      final user = data['data']['user'];
 
       if (token == null || user == null) {
         print("Token and data is missing");
@@ -55,6 +55,34 @@ class Auth {
         'success': false,
         'message': 'Unexpected error occurred.',
       };
+    }
+  }
+
+  // Logout
+  Future<bool> logout() async {
+    try {
+      final sharedPrefs = await SharedPreferences.getInstance();
+      String? token = sharedPrefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        print("No token for logout");
+        return false;
+      }
+
+      final response = await authRepository.logout(token);
+
+      if (response.statusCode == 200) {
+        await sharedPrefs.remove('token');
+        await sharedPrefs.remove('id');
+        print("Logout successful.");
+        return true;
+      } else {
+        print("Failed to logout: ${response.body}");
+        return false;
+      }
+    } catch (error) {
+      print("Error during logout: $error");
+      return false;
     }
   }
 }

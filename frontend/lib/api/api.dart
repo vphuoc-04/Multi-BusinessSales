@@ -26,4 +26,21 @@ class Api {
       body: json.encode(body)
     );
   }
+
+  // Get method
+  Future<http.Response> get(
+    String endpoint, {
+    Map<String, String>? headers, 
+  }) async {
+    final Uri url = urls(endpoint);
+
+    return await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+        if (headers != null) ...headers, 
+      },
+    );
+  }
 }

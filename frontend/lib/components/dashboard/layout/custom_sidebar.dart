@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 
+// Auth
+import 'package:frontend/modules/users/auth/auth.dart';
+
+// Screens
+import 'package:frontend/screens/dashboard/login_screen.dart';
+
 // Constants
 import 'package:frontend/constants/colors.dart';
 
@@ -19,6 +25,7 @@ class CustomSidebar extends StatefulWidget {
 }
 
 class _CustomSidebarState extends State<CustomSidebar> {
+  final Auth auth = Auth();
   bool isExpanded = false;
 
   void handleItemTap(int index) {
@@ -56,6 +63,20 @@ class _CustomSidebarState extends State<CustomSidebar> {
             onTap: () => handleItemTap(0),
             isExpanded: isExpanded, 
           ),
+          ElevatedButton(
+            onPressed: () async {
+              bool logout = await auth.logout();
+              if (logout) {
+                Navigator.pushReplacement(
+                  context, 
+                  MaterialPageRoute(builder: (context) => LoginScreen())
+                );
+              } else {
+                print("Error with logout");
+              }
+            }, 
+            child: Text("Logout")
+          )
         ]
       ),
     );

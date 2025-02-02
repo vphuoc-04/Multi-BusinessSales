@@ -17,4 +17,10 @@ class Token {
     print("Token loaded: $token");
     return token;
   }
+
+  // Remove token
+  static Future<void> removeToken() async {
+    final remove = await SharedPreferences.getInstance();
+    await remove.remove(tokenKey);
+  }
 }
