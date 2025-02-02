@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   int? id;
+  bool isLoading = false;
 
   final Auth auth = Auth();
 
@@ -47,8 +48,17 @@ class _LoginScreenState extends State<LoginScreen> {
       Future.delayed(Duration(milliseconds: 1000), () {
         ScaffoldMessenger.of(context).clearSnackBars();
       });
+
+      setState(() {
+        isLoading = false;
+      });
+
       return;
     }
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await Future.delayed(Duration(seconds: 2)); 
@@ -77,6 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Future.delayed(Duration(milliseconds: 1000), () {
           ScaffoldMessenger.of(context).clearSnackBars();
         });
+
+        setState(() {
+          isLoading = false;
+        });
+
         print('Login failed: ${response['message']}');
       }
     } catch (error) {
@@ -105,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 10),
               LoginButton(
+                isLoading: isLoading,
                 onTap: () => login(context)
               )
             ],
