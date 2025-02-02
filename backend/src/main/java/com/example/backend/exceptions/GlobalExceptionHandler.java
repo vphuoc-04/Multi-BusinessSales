@@ -23,8 +23,13 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        ApiResource apiResource = new ApiResource("Have error!", errors);
+        ApiResource<Map<String, String>> errorDetails = ApiResource.<Map<String, String>>builder()
+            .success(false)
+            .message("Have error.")
+            .errors(errors)
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .build();
 
-        return new ResponseEntity<>(apiResource, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<>(errorDetails, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 }

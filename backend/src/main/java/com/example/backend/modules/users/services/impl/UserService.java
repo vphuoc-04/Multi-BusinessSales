@@ -1,10 +1,8 @@
 package com.example.backend.modules.users.services.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,10 +52,7 @@ public class UserService extends BaseService implements UserServiceInterface {
             return new LoginResource(token, userResource);
 
         } catch (BadCredentialsException e) {
-            Map<String, String> errors = new HashMap<>();
-            errors.put("message", e.getMessage());
-            ApiResource apiResource = new ApiResource("Have error", errors);
-            return apiResource;
+            return ApiResource.error("AUTH_ERROR", e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
 }
