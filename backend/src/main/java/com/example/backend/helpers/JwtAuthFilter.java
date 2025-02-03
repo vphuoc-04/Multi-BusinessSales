@@ -36,7 +36,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     ){
         String path = request.getRequestURI();
         return path.startsWith("/api/v1/auth/login") ||
-            path.startsWith("/api/v1/user/{id}");
+            path.startsWith("/api/v1/user/{id}") ||
+            path.startsWith("/api/v1/auth/refresh");
     }
 
     @Override
@@ -100,6 +101,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     HttpServletResponse.SC_UNAUTHORIZED, 
                     "Authentication failed!", 
                     "Invalid token origin!"
+                );
+                return;
+            }
+
+            if(jwtService.isBlacklistedToken(jwt)){
+                sendErrorResponse(response, 
+                    request, 
+                    HttpServletResponse.SC_UNAUTHORIZED, 
+                    "Authentication failed!", 
+                    "Token has been blacklisted!"
                 );
                 return;
             }

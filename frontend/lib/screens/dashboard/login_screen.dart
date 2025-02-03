@@ -66,14 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response['success'] == true) {
         String token = response['token'];
-        await Token.setToken(token);
+        String refreshToken = response['refreshToken'];
+        await Token.setToken(token, refreshToken);
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LayoutScreen(id: id!,)),
+          MaterialPageRoute(builder: (context) => LayoutScreen(id: id)),
         );
 
-        print('Login successful: Token: $token');
+        print('Login successful: Token: $token, Refresh token: $refreshToken');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -25,9 +25,10 @@ class Auth {
       } 
 
       final token = data['data']['token'];
+      final refreshToken = data['data']['refreshToken'];
       final user = data['data']['user'];
 
-      if (token == null || user == null) {
+      if (token == null || refreshToken == null || user == null) {
         print("Token and data is missing");
         return {
           'success': false,
@@ -35,16 +36,19 @@ class Auth {
         };
       }
 
-      print("Token: $token");
-      print("User id: ${user['id']}");
+      print("Tokenid: $token");
+      print("Refresh token: $refreshToken");
+      print("User id: ${user['']}");
 
       final sharedPrefs = await SharedPreferences.getInstance();
       await sharedPrefs.setString('token', token);
+      await sharedPrefs.setString('refreshToken', refreshToken);
       await sharedPrefs.setInt('id', user['id']);
 
       return {
         'success': true,
         'token': token,
+        'refreshToken': refreshToken,
         'user': {
           'id': user['id']
         },
@@ -73,15 +77,72 @@ class Auth {
 
       if (response.statusCode == 200) {
         await sharedPrefs.remove('token');
+        await sharedPrefs.remove('refreshToken');
         await sharedPrefs.remove('id');
         print("Logout successful.");
         return true;
+      } else if (response.statusCode == 401) {
+        print("Token expired during logout. Attempting to refresh token...");
+        bool refreshed = await refreshToken();
+        if (refreshed) {
+          return await logout(); 
+        } else {
+          print("Refresh token failed. Logging out completely.");
+          await sharedPrefs.clear();
+          return false;
+        }
       } else {
         print("Failed to logout: ${response.body}");
         return false;
       }
     } catch (error) {
       print("Error during logout: $error");
+      return false;
+    }
+  }
+
+  // Refresh token
+  Future<bool> refreshToken() async {
+    final sharedPrefs = await SharedPreferences.getInstance();
+    String? oldToken = sharedPrefs.getString('token'); 
+    String? refreshToken = sharedPrefs.getString('refreshToken');
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      print("No refresh token available.");
+      return false;
+    }
+
+    try {
+      final response = await authRepository.refreshToken(refreshToken);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final newToken = data['token'];
+        final newRefreshToken = data['refreshToken'];
+
+        if (oldToken != null && oldToken.isNotEmpty) {
+          await authRepository.blacklistToken(oldToken);
+        }
+
+        print("Old token has been added to blacklisted: $oldToken");
+
+        await sharedPrefs.setString('token', newToken);
+        await sharedPrefs.setString('refreshToken', newRefreshToken);
+
+        print("New token after refresh: $newToken");
+        print("New refresh token after refresh: $newRefreshToken");
+
+        print("Access token refreshed successfully.");
+
+        return true;
+      } else {
+        print("Failed to refresh access token: ${response.body}");
+        await sharedPrefs.remove('token');
+        await sharedPrefs.remove('refreshToken');
+        return false;
+      }
+    } catch (error) {
+      print("Error during token refresh: $error");
       return false;
     }
   }
