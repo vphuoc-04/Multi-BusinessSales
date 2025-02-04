@@ -1,6 +1,8 @@
 package com.example.backend.services;
 
 import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
@@ -59,6 +61,11 @@ public class JwtService {
     }
 
     public String generateRefreshToken(Long userId, String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtConfig.getExpirationRefreshToken());
+
+        LocalDateTime localExpiryDate = expiryDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
         String refreshToken = UUID.randomUUID().toString();
 
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByUserId(userId);
@@ -67,11 +74,13 @@ public class JwtService {
             RefreshToken dbRefreshToken = optionalRefreshToken.get();
 
             dbRefreshToken.setRefreshToken(refreshToken);
+            dbRefreshToken.setExpiryDate(localExpiryDate);
             refreshTokenRepository.save(dbRefreshToken);
         } else {
             RefreshToken insertRefreshToken = new RefreshToken();
 
             insertRefreshToken.setRefreshToken(refreshToken);
+            insertRefreshToken.setExpiryDate(localExpiryDate);
             insertRefreshToken.setUserId(userId);
             refreshTokenRepository.save(insertRefreshToken);
         }

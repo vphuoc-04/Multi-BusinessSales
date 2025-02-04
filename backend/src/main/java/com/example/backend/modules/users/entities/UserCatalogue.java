@@ -18,19 +18,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "user_catalogue")
+public class UserCatalogue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long catalogueId;
-    private String firstName;
-    private String middleName;
-    private String lastName;
-    private String email;
-    private String phone;
-    private String password;
-    private String img;
+    private String name;
+    
+    @Column(name = "publish", nullable = false, columnDefinition = "TINYINT")
+    private Integer publish;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

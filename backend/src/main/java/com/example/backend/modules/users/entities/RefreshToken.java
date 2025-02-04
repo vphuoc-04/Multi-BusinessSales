@@ -31,6 +31,9 @@ public class RefreshToken {
     @Column(nullable = false, unique = true, columnDefinition="TEXT")
     private String refreshToken;
 
+    @Column(name = "expiry_date")
+    private LocalDateTime expiryDate;
+
     @Column(name = "user_id")
     private Long userId;
 
