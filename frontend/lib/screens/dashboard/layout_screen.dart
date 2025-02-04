@@ -3,6 +3,7 @@ import 'package:frontend/components/dashboard/layout/custom_sidebar.dart';
 
 // Screens
 import 'package:frontend/screens/dashboard/dashboard_screen.dart';
+import 'package:frontend/screens/dashboard/user_catalogue_screen.dart';
 
 class LayoutScreen extends StatefulWidget {
   final int? id;
@@ -21,7 +22,8 @@ class _LayoutScreenState extends State<LayoutScreen> {
   void initState() {
     super.initState();
     screens = <Widget> [
-      DashboardScreen()
+      DashboardScreen(),
+      UserCatalogueScreen()
     ];
   }
 
