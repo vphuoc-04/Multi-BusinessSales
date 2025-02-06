@@ -5,10 +5,17 @@ import 'package:frontend/modules/users/repositories/user_catalogue_repository.da
 
 // Tokens
 import 'package:frontend/tokens/token.dart';
-import 'package:frontend/tokens/auto_refresh_token.dart';
+
+// Auth
+import 'package:frontend/modules/users/auth/auth.dart';
+
+// Model
+import 'package:frontend/modules/users/models/user_catalogue.dart';
 
 class UserCatalogueService {
   final UserCatalogueRepository userCatalogueRepository = UserCatalogueRepository();
+
+  final Auth auth = Auth();
 
   // Add user catalogue
   Future<Map<String, dynamic>> add(String name, int publish) async {
@@ -29,9 +36,8 @@ class UserCatalogueService {
       } else if (response.statusCode == 401) {
         print("Token expired during logout. Attempting to refresh token...");
 
-        final autoRefresh = AutoRefreshToken();
-        bool isRefreshed = await autoRefresh.autoRefreshToken(); 
-        if (isRefreshed) {
+        bool refreshToken = await auth.refreshToken(); 
+        if (refreshToken) {
           return add(name, publish);
         } else {
           print("Refresh token failed. Logging out completely.");
@@ -48,6 +54,48 @@ class UserCatalogueService {
     } catch (error) {
       print("Add user catalogue failed: $error");
       throw Exception("Error: $error");
+    }
+  }
+
+  // Fetch user catalogue data
+  Future<List<UserCatalogue>> fetchUserCatalogue() async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await userCatalogueRepository.get(token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<dynamic> userCataloguesList = data['data']['content'];
+
+        print("User catalogue list: $userCataloguesList");
+
+        return userCataloguesList
+            .map((catalogue) => UserCatalogue.fromJson(catalogue))
+            .toList();
+            
+      } else if (response.statusCode == 401) {
+        print("Token expired during logout. Attempting to refresh token...");
+
+        bool refreshToken = await auth.refreshToken(); 
+
+        if (refreshToken) {
+          return fetchUserCatalogue();
+        } else {
+          print("Refresh token failed. Logging out completely.");
+          throw Exception("Refresh token failed, please log in again.");
+        }
+
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Failed to load user catalogue data!');
+      }
+    } catch (error) {
+      throw Exception('An error occurred while fetching user catalogue data!');
     }
   }
 }

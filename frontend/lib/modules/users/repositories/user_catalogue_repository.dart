@@ -16,4 +16,14 @@ class UserCatalogueRepository {
       }
     );
   }
+
+  // Fetch user catalogue
+  Future<dynamic> get({ required String token}) {
+    return api.get(
+      'user_catalogue',
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
+    );
+  }
 }

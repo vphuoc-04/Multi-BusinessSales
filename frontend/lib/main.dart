@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Tokens
 import 'package:frontend/tokens/token.dart';
-import 'package:frontend/tokens/auto_refresh_token.dart';
 
 // Auth
 import 'package:frontend/modules/users/auth/auth.dart';
@@ -21,10 +20,9 @@ void main() async {
   int? id;
 
   if (token != null) {
-    final autoRefresh = AutoRefreshToken();
-    bool isRefreshed = await autoRefresh.autoRefreshToken();  
+    bool refreshToken = await auth.refreshToken(); 
 
-    if (isRefreshed) {
+    if (refreshToken) {
       final prefs = await SharedPreferences.getInstance();
       token = prefs.getString('token');
       id = prefs.getInt('id');

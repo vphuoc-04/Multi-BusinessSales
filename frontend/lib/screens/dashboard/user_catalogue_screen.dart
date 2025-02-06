@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
+// Widgets
+import 'package:frontend/components/dashboard/catalogue/user_catalouge_data.dart';
+
 // Constants
 import 'package:frontend/constants/colors.dart';
+
+// Models
+import 'package:frontend/modules/users/models/user_catalogue.dart';
 
 // Services
 import 'package:frontend/modules/users/services/user_catalogue_service.dart';
@@ -19,9 +25,17 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
 
   final TextEditingController nameController = TextEditingController();
 
+  List<UserCatalogue> userCataloguesList = [];
+
   int publishStatus = 0;
 
   bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserCatalogueData();
+  }
 
   // Add user catalogue
   Future<void> addUserCatalogue() async {
@@ -41,6 +55,7 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
 
       if (response['success'] == true) {
         print("New user catalogue added successfully");
+        await fetchUserCatalogueData();
       } else {
         print(response['message'] ?? "Failed to add group");
       }
@@ -51,6 +66,34 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  // Fetch user catalogue data
+  Future<void> fetchUserCatalogueData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response = await userCatalogueService.fetchUserCatalogue();
+
+      setState(() {
+        userCataloguesList = response;
+      });
+
+    } catch (error) {
+      print("Error: $error");
+
+      setState(() {
+        isLoading = false;
+      });
+
+    } finally {
+
+      setState(() {
+        isLoading = false;
+      });
+
     }
   }
 
@@ -105,7 +148,15 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                           color: baseColor
                         ),
                       )
-              )
+              ),
+              SizedBox(height: 50),
+              Expanded(
+              child: isLoading
+                  ? Center(
+                      child: LoadingWidget(size: 20, color: myColor),
+                    )
+                  : UserCatalougeData(userCataloguesList: userCataloguesList), 
+            ),
             ],
           )
         ),
