@@ -98,4 +98,34 @@ class UserCatalogueService {
       throw Exception('An error occurred while fetching user catalogue data!');
     }
   }
+
+  // Update user catalogue
+  Future<Map<String, dynamic>> update(int id, String name, int publish) async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      print('Error: Token is null.');
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await userCatalogueRepository.update(id, name, publish, token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print("Data update: $data");
+        
+        return data;
+      } else {
+        print("Update group failed with status: ${response.statusCode}");
+        return {
+          'success': false,
+          'message': 'Update group failed!'
+        };
+      }
+    } catch (error) {
+      print("Update group failed: $error");
+      throw Exception("Error: $error");
+    }
+  }
 }

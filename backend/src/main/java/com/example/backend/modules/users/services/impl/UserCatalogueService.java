@@ -13,8 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.backend.modules.users.entities.UserCatalogue;
 import com.example.backend.modules.users.repositories.UserCatalogueRepository;
 import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
+import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
 import com.example.backend.modules.users.services.interfaces.UserCatalogueServiceInterface;
 import com.example.backend.services.BaseService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UserCatalogueService extends BaseService implements UserCatalogueServiceInterface {
@@ -46,5 +49,19 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
         return userCataloguesRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public UserCatalogue update(Long id, UpdateRequest request) {
+        UserCatalogue userCatalogue = userCataloguesRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User catalogue not found"));
+        
+        UserCatalogue payload = userCatalogue.toBuilder()
+            .name(request.getName())
+            .publish(request.getPublish())
+            .build();    
+
+        return userCataloguesRepository.save(payload);
     }
 }

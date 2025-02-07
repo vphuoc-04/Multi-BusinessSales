@@ -74,6 +74,7 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
     setState(() {
       isLoading = true;
     });
+
     try {
       final response = await userCatalogueService.fetchUserCatalogue();
 
@@ -95,6 +96,70 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
       });
 
     }
+  }
+
+  // Update user catalogue
+  void showUpdateDialog(UserCatalogue group) {
+    TextEditingController nameController = TextEditingController(text: group.name);
+    int publishStatus = group.publish;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder( 
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Edit Group"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: "Group Name"),
+                  ),
+                  DropdownButton<int>(
+                    value: publishStatus,
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        publishStatus = newValue!;
+                      });
+                    },
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text("Inactive")),
+                      DropdownMenuItem(value: 1, child: Text("Active")),
+                      DropdownMenuItem(value: 2, child: Text("Archived")),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    setState(() { isLoading = true; }); 
+
+                    await userCatalogueService.update(group.id, nameController.text, publishStatus);
+
+                    Navigator.pop(context);
+                    fetchUserCatalogueData();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: myColor),
+                  child: isLoading
+                      ? LoadingWidget(size: 5, color: baseColor)
+                      : Text(
+                          "Update",
+                          style: TextStyle(color: baseColor),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -155,7 +220,10 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                   ? Center(
                       child: LoadingWidget(size: 20, color: myColor),
                     )
-                  : UserCatalougeData(userCataloguesList: userCataloguesList), 
+                  : UserCatalougeData(
+                      userCataloguesList: userCataloguesList,
+                      showUpdateDialog: showUpdateDialog,
+                    ), 
             ),
             ],
           )
