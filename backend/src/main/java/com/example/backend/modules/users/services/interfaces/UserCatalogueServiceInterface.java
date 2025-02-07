@@ -12,4 +12,5 @@ public interface UserCatalogueServiceInterface {
     UserCatalogue create(StoreRequest request);
     Page<UserCatalogue> paginate(Map<String, String[]> parameters);
     UserCatalogue update(Long id, UpdateRequest request);
+    boolean delete(Long id);
 }

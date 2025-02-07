@@ -162,6 +162,46 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
     );
   }
 
+  // Delete user catalogue
+  void showDeleteDialog(UserCatalogue group) {
+    showDialog(
+      context: context, 
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Delete Group"),
+              content: Text("Are you sure you want to delete the group ${group.name}?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    setState(() { isLoading = true; }); 
+
+                    await userCatalogueService.delete(group.id);
+
+                    Navigator.pop(context);
+                    fetchUserCatalogueData();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: myColor),
+                  child: isLoading
+                      ? LoadingWidget(size: 5, color: baseColor)
+                      : Text(
+                          "Delete",
+                          style: TextStyle(color: baseColor),
+                        ),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -223,6 +263,7 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                   : UserCatalougeData(
                       userCataloguesList: userCataloguesList,
                       showUpdateDialog: showUpdateDialog,
+                      showDeleteDialog: showDeleteDialog,
                     ), 
             ),
             ],

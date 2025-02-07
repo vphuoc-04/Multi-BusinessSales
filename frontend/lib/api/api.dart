@@ -47,18 +47,35 @@ class Api {
   // Put method
   Future<http.Response> put(
     String endpoint, Map<String, dynamic> body, {
-      Map<String, String>? headers,
-    }) async {
-      final Uri url = urls(endpoint);
+    Map<String, String>? headers,
+  }) async {
+    final Uri url = urls(endpoint);
 
-      return await http.put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-          if (headers != null) ...headers, 
-        },
-        body: json.encode(body)
-      );
-    }
+    return await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+        if (headers != null) ...headers, 
+      },
+      body: json.encode(body)
+    );
+  }
+
+  // Delete method
+  Future<http.Response> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
+    final Uri url = urls(endpoint);
+
+    return await http.delete(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+        if (headers != null) ...headers,
+      },
+    );
+  }
 }

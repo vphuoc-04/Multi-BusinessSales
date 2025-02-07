@@ -8,11 +8,13 @@ import 'package:iconly/iconly.dart';
 class UserCatalougeData extends StatelessWidget {
   final List<UserCatalogue> userCataloguesList;
   final Function(UserCatalogue) showUpdateDialog;
+  final Function(UserCatalogue) showDeleteDialog;
 
   const UserCatalougeData({
     super.key, 
     required this.userCataloguesList,
-    required this.showUpdateDialog
+    required this.showUpdateDialog,
+    required this.showDeleteDialog
   });
 
   @override
@@ -28,10 +30,19 @@ class UserCatalougeData extends StatelessWidget {
               : group.publish == 0
                   ? "Inactive"
                   : "Archived"),
-          trailing: IconButton(
-            onPressed: () => showUpdateDialog(group),
-            icon: Icon(IconlyLight.setting, color: myColor,),
-          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () => showUpdateDialog(group),
+                icon: Icon(IconlyLight.setting, color: myColor),
+              ),
+              IconButton(
+                onPressed: () => showDeleteDialog(group),
+                icon: Icon(IconlyLight.delete, color: Colors.red),
+              ),
+            ],
+          )
         );
       },
     );

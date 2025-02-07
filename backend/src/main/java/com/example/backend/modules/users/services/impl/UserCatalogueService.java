@@ -64,4 +64,15 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
 
         return userCataloguesRepository.save(payload);
     }
+
+    @Override
+    @Transactional
+    public boolean delete(Long id) {
+        UserCatalogue userCatalogue = userCataloguesRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User catalogue not found"));
+
+        userCataloguesRepository.delete(userCatalogue);
+
+        return true;
+    }
 }

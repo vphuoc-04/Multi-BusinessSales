@@ -27,12 +27,23 @@ class UserCatalogueRepository {
     );
   }
 
+  // Update user catalogue
   Future<dynamic> update(int id, String name, int publish, { required String token }) {
     return api.put(
       'user_catalogue/$id', {
         'name': name,
         'publish': publish
       },
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
+    );
+  }
+
+  // Delete user catalgoue
+  Future<dynamic> delete(int id, { required String token }) {
+    return api.delete(
+      'user_catalogue/$id',
       headers: {
         'Authorization': 'Bearer $token'
       }
