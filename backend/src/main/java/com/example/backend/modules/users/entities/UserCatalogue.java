@@ -25,6 +25,8 @@ public class UserCatalogue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long createdBy;
+    private Long updatedBy;
     private String name;
     
     @Column(name = "publish", nullable = false, columnDefinition = "TINYINT")

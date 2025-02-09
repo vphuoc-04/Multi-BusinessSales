@@ -11,20 +11,23 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name = "product_catagories")
+@Table(name = "product_categories")
 public class ProductCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private Long createdBy;
+    private Long updatedBy;
     
     @Column(name = "publish", nullable = false, columnDefinition = "TINYINT")
     private Integer publish;

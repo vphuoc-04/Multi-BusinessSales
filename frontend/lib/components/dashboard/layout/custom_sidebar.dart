@@ -70,6 +70,13 @@ class _CustomSidebarState extends State<CustomSidebar> {
             onTap: () => handleItemTap(1), 
             isExpanded: isExpanded
           ),
+          SidebarItem(
+            icon: IconlyLight.category, 
+            label: 'Product category', 
+            isSelected: widget.selectedIndex == 2, 
+            onTap: () => handleItemTap(2), 
+            isExpanded: isExpanded
+          ),
           ElevatedButton(
             onPressed: () async {
               bool logout = await auth.logout();

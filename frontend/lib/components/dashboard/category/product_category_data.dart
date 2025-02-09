@@ -5,16 +5,16 @@ import 'package:iconly/iconly.dart';
 import 'package:frontend/constants/colors.dart';
 
 // Models
-import 'package:frontend/modules/users/models/user_catalogue.dart';
+import 'package:frontend/modules/products/models/product_category.dart';
 
-class UserCatalougeData extends StatelessWidget {
-  final List<UserCatalogue> userCataloguesList;
-  final Function(UserCatalogue) showUpdateDialog;
-  final Function(UserCatalogue) showDeleteDialog;
+class ProductCategoryData extends StatelessWidget {
+  final List<ProductCategory> productCatagoriesList;
+  final Function(ProductCategory) showUpdateDialog;
+  final Function(ProductCategory) showDeleteDialog;
 
-  const UserCatalougeData({
+  const ProductCategoryData({
     super.key, 
-    required this.userCataloguesList,
+    required this.productCatagoriesList,
     required this.showUpdateDialog,
     required this.showDeleteDialog
   });
@@ -22,9 +22,9 @@ class UserCatalougeData extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: userCataloguesList.length,
+      itemCount: productCatagoriesList.length,
       itemBuilder: (context, index) {
-        final group = userCataloguesList[index];
+        final group = productCatagoriesList[index];
         return ListTile(
           title: Text(group.name),
           subtitle: Text(group.publish == 1

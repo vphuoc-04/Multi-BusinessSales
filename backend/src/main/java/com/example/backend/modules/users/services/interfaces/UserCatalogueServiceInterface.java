@@ -9,8 +9,8 @@ import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
 import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
 
 public interface UserCatalogueServiceInterface {
-    UserCatalogue create(StoreRequest request);
+    UserCatalogue create(StoreRequest request, Long createdBy);
     Page<UserCatalogue> paginate(Map<String, String[]> parameters);
-    UserCatalogue update(Long id, UpdateRequest request);
+    UserCatalogue update(Long id, UpdateRequest request, Long updatedBy);
     boolean delete(Long id);
 }

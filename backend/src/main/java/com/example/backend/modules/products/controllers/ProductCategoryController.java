@@ -1,4 +1,4 @@
-package com.example.backend.modules.users.controllers;
+package com.example.backend.modules.products.controllers;
 
 import java.util.Map;
 
@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.backend.modules.users.entities.UserCatalogue;
-import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
-import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
-import com.example.backend.modules.users.resources.UserCatalogueResource;
-import com.example.backend.modules.users.services.interfaces.UserCatalogueServiceInterface;
+import com.example.backend.modules.products.entities.ProductCategory;
+import com.example.backend.modules.products.requests.ProductCategory.StoreRequest;
+import com.example.backend.modules.products.requests.ProductCategory.UpdateRequest;
+import com.example.backend.modules.products.resources.ProductCategoryResource;
+import com.example.backend.modules.products.services.interfaces.ProductCategoryServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.JwtService;
 
@@ -30,21 +30,21 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/v1")
-public class UserCatalogueController {
-    private final UserCatalogueServiceInterface userCatagoluesService;
+public class ProductCategoryController {
+    private final ProductCategoryServiceInterface productCategoryService;
 
     @Autowired
     private JwtService jwtService;
 
-    public UserCatalogueController(
-        UserCatalogueServiceInterface userCatagoluesService,
+    public ProductCategoryController(
+        ProductCategoryServiceInterface productCategoryService,
         JwtService jwtService
     ){
-        this.userCatagoluesService = userCatagoluesService;
+        this.productCategoryService = productCategoryService;
         this.jwtService = jwtService;
     }
 
-    @PostMapping("/user_catalogue")
+    @PostMapping("/product_category")
     public ResponseEntity<?> store(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
@@ -53,17 +53,17 @@ public class UserCatalogueController {
 
             Long createdBy = Long.valueOf(userId);
 
-            UserCatalogue userCatalogue = userCatagoluesService.create(request, createdBy);
+            ProductCategory productCategory = productCategoryService.create(request, createdBy);
 
-            UserCatalogueResource userCatalogueResource = UserCatalogueResource.builder()
-                .id(userCatalogue.getId())
-                .createdBy(userCatalogue.getCreatedBy())
-                .updatedBy(userCatalogue.getUpdatedBy())
-                .name(userCatalogue.getName())
-                .publish(userCatalogue.getPublish())
+            ProductCategoryResource productCategoryResource = ProductCategoryResource.builder()
+                .id(productCategory.getId())
+                .createdBy(productCategory.getCreatedBy())
+                .updatedBy(productCategory.getUpdatedBy())
+                .name(productCategory.getName())
+                .publish(productCategory.getPublish())
                 .build();
 
-            ApiResource<UserCatalogueResource> response = ApiResource.ok(userCatalogueResource, "New user catalogue added successfully");
+            ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product catagory added successfulyy");
 
             return ResponseEntity.ok(response);
 
@@ -72,28 +72,28 @@ public class UserCatalogueController {
         }
     }
 
-    @GetMapping("/user_catalogue")
+    @GetMapping("/product_category")
     public ResponseEntity<?> index(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
 
-        Page<UserCatalogue> userCatalogues = userCatagoluesService.paginate(parameters);
+        Page<ProductCategory> productCategories = productCategoryService.paginate(parameters);
 
-        Page<UserCatalogueResource> userCatalogueResource = userCatalogues.map(userCatalogue -> 
-            UserCatalogueResource.builder()
-                .id(userCatalogue.getId())
-                .createdBy(userCatalogue.getCreatedBy())
-                .updatedBy(userCatalogue.getUpdatedBy())
-                .name(userCatalogue.getName())
-                .publish(userCatalogue.getPublish())
+        Page<ProductCategoryResource> productCategoryResource = productCategories.map(productCategory -> 
+            ProductCategoryResource.builder()
+                .id(productCategory.getId())
+                .createdBy(productCategory.getCreatedBy())
+                .updatedBy(productCategory.getUpdatedBy())
+                .name(productCategory.getName())
+                .publish(productCategory.getPublish())
                 .build()
         );
 
-        ApiResource<Page<UserCatalogueResource>> response = ApiResource.ok(userCatalogueResource, "User catalogue data fetched successfully");
+        ApiResource<Page<ProductCategoryResource>> response = ApiResource.ok(productCategoryResource, "Product category data fetched successfully");
 
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/user_catalogue/{id}")
+    @PutMapping("/product_category/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
@@ -102,17 +102,17 @@ public class UserCatalogueController {
 
             Long updatedBy = Long.valueOf(userId);
 
-            UserCatalogue userCatalogue = userCatagoluesService.update(id, request, updatedBy);
+            ProductCategory productCategory = productCategoryService.update(id, request, updatedBy);
             
-            UserCatalogueResource userCatalogueResource = UserCatalogueResource.builder()
-                .id(userCatalogue.getId())
-                .createdBy(userCatalogue.getCreatedBy())
-                .updatedBy(userCatalogue.getUpdatedBy())
-                .name(userCatalogue.getName())
-                .publish(userCatalogue.getPublish())
+            ProductCategoryResource productCategoryResource = ProductCategoryResource.builder()
+                .id(productCategory.getId())
+                .createdBy(productCategory.getCreatedBy())
+                .updatedBy(productCategory.getUpdatedBy())
+                .name(productCategory.getName())
+                .publish(productCategory.getPublish())
                 .build();
 
-            ApiResource<UserCatalogueResource> response = ApiResource.ok(userCatalogueResource, "User catalogue updated successfully");
+            ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product category updated successfully");
 
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
@@ -126,14 +126,14 @@ public class UserCatalogueController {
         }   
     }
 
-    @DeleteMapping("/user_catalogue/{id}")
+    @DeleteMapping("/product_category/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
-            boolean deleted = userCatagoluesService.delete(id);
+            boolean deleted = productCategoryService.delete(id);
 
             if (deleted) {
                 return ResponseEntity.ok(
-                    ApiResource.message("User catalogue deleted successfully", HttpStatus.OK)
+                    ApiResource.message("Product category deleted successfully", HttpStatus.OK)
                 );
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(

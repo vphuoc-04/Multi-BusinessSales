@@ -1,4 +1,4 @@
-package com.example.backend.modules.users.resources;
+package com.example.backend.modules.products.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @RequiredArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserCatalogueResource {
+public class ProductCategoryResource {
     private final Long id;
     private final Long createdBy;
     private final Long updatedBy;

@@ -26,11 +26,12 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
 
     @Override
     @Transactional
-    public UserCatalogue create(StoreRequest request) {
+    public UserCatalogue create(StoreRequest request, Long createdBy) {
         try {
             UserCatalogue payload = UserCatalogue.builder()
                 .name(request.getName())
                 .publish(request.getPublish())
+                .createdBy(createdBy)
                 .build();
 
             return userCataloguesRepository.save(payload);
@@ -53,13 +54,14 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
 
     @Override
     @Transactional
-    public UserCatalogue update(Long id, UpdateRequest request) {
+    public UserCatalogue update(Long id, UpdateRequest request, Long updatedBy) {
         UserCatalogue userCatalogue = userCataloguesRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("User catalogue not found"));
         
         UserCatalogue payload = userCatalogue.toBuilder()
             .name(request.getName())
             .publish(request.getPublish())
+            .updatedBy(updatedBy)
             .build();    
 
         return userCataloguesRepository.save(payload);
