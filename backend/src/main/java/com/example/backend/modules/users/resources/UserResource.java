@@ -10,9 +10,13 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserResource {
     private final Long id;
+    private final Long catalogueId;
+    private final Long addedBy;
+    private final Long editedBy;
     private final String email;
     private final String firstName;
     private final String lastName;
     private final String middleName;
     private final String phone;
+    private final String password;
 }

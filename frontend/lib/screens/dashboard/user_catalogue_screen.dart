@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Components
 import 'package:frontend/components/dashboard/catalogue/user_catalouge_data.dart';
+import 'package:frontend/components/dashboard/catalogue/user_added.dart';
 
 // Constants
 import 'package:frontend/constants/colors.dart';
@@ -264,6 +265,14 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                       userCataloguesList: userCataloguesList,
                       showUpdateDialog: showUpdateDialog,
                       showDeleteDialog: showDeleteDialog,
+                      onTapCatalogue: (UserCatalogue catalogue) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UserAdded(catalogueId: catalogue.id),
+                          ),
+                        );
+                      },
                     ), 
             ),
             ],

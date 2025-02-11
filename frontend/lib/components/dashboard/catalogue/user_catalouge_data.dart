@@ -11,12 +11,14 @@ class UserCatalougeData extends StatelessWidget {
   final List<UserCatalogue> userCataloguesList;
   final Function(UserCatalogue) showUpdateDialog;
   final Function(UserCatalogue) showDeleteDialog;
+  final Function(UserCatalogue) onTapCatalogue;
 
   const UserCatalougeData({
     super.key, 
     required this.userCataloguesList,
     required this.showUpdateDialog,
-    required this.showDeleteDialog
+    required this.showDeleteDialog,
+    required this.onTapCatalogue
   });
 
   @override
@@ -27,11 +29,12 @@ class UserCatalougeData extends StatelessWidget {
         final group = userCataloguesList[index];
         return ListTile(
           title: Text(group.name),
-          subtitle: Text(group.publish == 1
+          subtitle: Text("Status: ${group.publish == 1
               ? "Active"
               : group.publish == 0
                   ? "Inactive"
-                  : "Archived"),
+                  : "Archived"}"),
+          onTap: () => onTapCatalogue(group),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

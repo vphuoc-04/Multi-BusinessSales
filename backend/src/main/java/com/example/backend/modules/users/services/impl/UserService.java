@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.modules.users.entities.User;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.LoginRequest;
+import com.example.backend.modules.users.requests.User.StoreRequest;
 import com.example.backend.modules.users.resources.LoginResource;
 import com.example.backend.modules.users.resources.UserResource;
 import com.example.backend.modules.users.services.interfaces.UserServiceInterface;
@@ -54,6 +56,28 @@ public class UserService extends BaseService implements UserServiceInterface {
 
         } catch (BadCredentialsException e) {
             return ApiResource.error("AUTH_ERROR", e.getMessage(), HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public User add(StoreRequest request, Long addedBy) {
+        try {
+            User payload = User.builder()
+                .addedBy(addedBy)
+                .catalogueId(request.getCatalogueId())
+                .firstName(request.getFirstName())
+                .middleName(request.getMiddleName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .password(request.getPassword())
+                .build();
+
+            return userRepository.save(payload);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Transaction failed: " + e.getMessage());
         }
     }
 }
