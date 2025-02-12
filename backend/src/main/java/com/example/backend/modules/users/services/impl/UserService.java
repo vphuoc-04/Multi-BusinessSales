@@ -1,7 +1,12 @@
 package com.example.backend.modules.users.services.impl;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +23,8 @@ import com.example.backend.modules.users.services.interfaces.UserServiceInterfac
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseService;
 import com.example.backend.services.JwtService;
+
+import org.springframework.data.domain.Sort;
 
 @Service
 public class UserService extends BaseService implements UserServiceInterface {
@@ -79,5 +86,17 @@ public class UserService extends BaseService implements UserServiceInterface {
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Page<User> paginate(Long catalogueId, Map<String, String[]> parameters) {
+        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
+        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
+        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
+        Sort sort = createSort(sortParam);
+
+        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
+
+        return userRepository.findByCatalogueId(catalogueId, pageable);
     }
 }

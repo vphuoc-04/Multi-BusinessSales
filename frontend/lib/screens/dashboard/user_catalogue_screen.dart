@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/components/dashboard/catalogue/user_belong_catalogue_data.dart';
 
 // Components
 import 'package:frontend/components/dashboard/catalogue/user_catalouge_data.dart';
@@ -273,8 +274,16 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                           ),
                         );
                       },
+                      onTapListUserBelongCatalogue: (UserCatalogue catalogue) {
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => UserBelongCatalogueData(catalogueId: catalogue.id)
+                          )
+                        );
+                      }
                     ), 
-            ),
+              ),
             ],
           )
         ),

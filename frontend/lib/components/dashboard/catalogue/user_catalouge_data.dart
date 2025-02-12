@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:iconly/iconly.dart';
 
 // Constants
@@ -12,13 +13,15 @@ class UserCatalougeData extends StatelessWidget {
   final Function(UserCatalogue) showUpdateDialog;
   final Function(UserCatalogue) showDeleteDialog;
   final Function(UserCatalogue) onTapCatalogue;
+  final Function(UserCatalogue) onTapListUserBelongCatalogue;
 
   const UserCatalougeData({
     super.key, 
     required this.userCataloguesList,
     required this.showUpdateDialog,
     required this.showDeleteDialog,
-    required this.onTapCatalogue
+    required this.onTapCatalogue,
+    required this.onTapListUserBelongCatalogue
   });
 
   @override
@@ -38,6 +41,10 @@ class UserCatalougeData extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              IconButton(
+                onPressed: () => onTapListUserBelongCatalogue(group),
+                icon: Icon(IconlyLight.user, color: myColor),
+              ),
               IconButton(
                 onPressed: () => showUpdateDialog(group),
                 icon: Icon(IconlyLight.setting, color: myColor),

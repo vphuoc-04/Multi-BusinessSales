@@ -1,12 +1,16 @@
 package com.example.backend.modules.users.controllers;
 
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +24,7 @@ import com.example.backend.modules.users.services.interfaces.UserServiceInterfac
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.JwtService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -88,5 +93,27 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("Network error", HttpStatus.UNAUTHORIZED));
         } 
+    }
+
+    @GetMapping("/user_belong_cataloge/{catalogueId}")
+    public ResponseEntity<?> getUsersByCatalogue(@PathVariable Long catalogueId, HttpServletRequest request) {
+        Map<String, String[]> parameters = request.getParameterMap();
+
+        Page<User> users = userService.paginate(catalogueId, parameters);
+
+        Page<UserResource> userResources = users.map(user -> 
+            UserResource.builder()
+                .id(user.getId())
+                .addedBy(user.getAddedBy())
+                .editedBy(user.getEditedBy())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .build()
+        );
+
+        ApiResource<Page<UserResource>> response = ApiResource.ok(userResources, "List user of user catalogue fetched successfully");
+
+        return ResponseEntity.ok(response);
     }
 }
