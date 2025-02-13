@@ -66,4 +66,14 @@ class UserRepository {
       }
     );
   }
+
+  // Delete user
+  Future<dynamic> delete(int id, { required String token }) {
+    return api.delete(
+      'delete_user/$id',
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
+    );
+  }
 }

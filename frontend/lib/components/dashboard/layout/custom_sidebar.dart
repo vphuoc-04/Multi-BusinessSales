@@ -77,20 +77,23 @@ class _CustomSidebarState extends State<CustomSidebar> {
             onTap: () => handleItemTap(2), 
             isExpanded: isExpanded
           ),
-          ElevatedButton(
-            onPressed: () async {
+          SidebarItem(
+            icon: IconlyLight.logout,
+            label: 'Logout',
+            isSelected: false,
+            onTap: () async {
               bool logout = await auth.logout();
               if (logout) {
                 Navigator.pushReplacement(
-                  context, 
-                  MaterialPageRoute(builder: (context) => LoginScreen())
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               } else {
                 print("Error with logout");
               }
-            }, 
-            child: Text("Logout")
-          )
+            },
+            isExpanded: isExpanded,
+          ),
         ]
       ),
     );

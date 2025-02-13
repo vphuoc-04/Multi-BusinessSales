@@ -153,4 +153,45 @@ class UserService {
       throw Exception("Error: $error");
     }
   }
+
+  // Delete user
+  Future<Map<String, dynamic>> delete(int id) async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      print('Error: Token is null.');
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await userRepository.delete(id, token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print("Data delete: $data");
+        
+        return data;
+      } else if (response.statusCode == 401) {
+        print("Token expired during logout. Attempting to refresh token...");
+
+      bool refreshToken = await auth.refreshToken(); 
+        if (refreshToken) {
+          return delete(id);
+        } else {
+          print("Refresh token failed. Logging out completely.");
+        }
+      }
+
+      print("Delete user failed with status: ${response.body}");
+
+      return {
+        'success': false,
+        'message': 'Delete group failed!'
+      };
+
+    } catch (error) {
+      print("Delete user failed: $error");
+      throw Exception("Error: $error");
+    }
+  }
 }

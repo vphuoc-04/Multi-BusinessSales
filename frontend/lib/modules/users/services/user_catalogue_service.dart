@@ -149,7 +149,7 @@ class UserCatalogueService {
       throw Exception('Token is null. Please log in again.');
     }
 
-        try {
+    try {
       final response = await userCatalogueRepository.delete(id, token: token);
 
       if (response.statusCode == 200) {

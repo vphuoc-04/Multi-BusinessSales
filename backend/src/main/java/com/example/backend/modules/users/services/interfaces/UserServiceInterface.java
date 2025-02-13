@@ -15,4 +15,5 @@ public interface UserServiceInterface {
     User add(StoreRequest request, Long addedBy);
     Page<User> paginate(Long catalogueId, Map<String, String[]> parameters);
     User edit(Long id, UpdateRequest request, Long editedBy);
+    boolean delete(Long id);
 }

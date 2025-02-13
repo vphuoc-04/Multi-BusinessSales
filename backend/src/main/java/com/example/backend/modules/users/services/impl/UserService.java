@@ -122,4 +122,15 @@ public class UserService extends BaseService implements UserServiceInterface {
         
         return userRepository.save(payload);
     }
+
+    @Override
+    @Transactional
+    public boolean delete(Long id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        userRepository.delete(user);
+
+        return true;
+    }
 }
