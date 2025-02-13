@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.backend.modules.users.entities.User;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.User.StoreRequest;
+import com.example.backend.modules.users.requests.User.UpdateRequest;
 import com.example.backend.modules.users.resources.UserResource;
 import com.example.backend.modules.users.services.interfaces.UserServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.JwtService;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -104,16 +106,58 @@ public class UserController {
         Page<UserResource> userResources = users.map(user -> 
             UserResource.builder()
                 .id(user.getId())
+                .catalogueId(user.getCatalogueId())
                 .addedBy(user.getAddedBy())
                 .editedBy(user.getEditedBy())
                 .firstName(user.getFirstName())
+                .middleName(user.getMiddleName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
+                .phone(user.getPhone())
+                .password(user.getPassword())
                 .build()
         );
 
         ApiResource<Page<UserResource>> response = ApiResource.ok(userResources, "List user of user catalogue fetched successfully");
 
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/edit_user/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
+        try {
+            String token = bearerToken.substring(7);
+
+            String userId = jwtService.getUserIdFromJwt(token);
+
+            Long updatedBy = Long.valueOf(userId);
+
+            User user = userService.edit(id, request, updatedBy);
+            
+            UserResource userResource = UserResource.builder()
+                .id(user.getId())
+                .addedBy(user.getAddedBy())
+                .editedBy(user.getEditedBy())
+                .catalogueId(user.getCatalogueId())
+                .firstName(user.getFirstName())
+                .middleName(user.getMiddleName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .password(user.getPassword())
+                .build();
+                
+            ApiResource<UserResource> response = ApiResource.ok(userResource, "User updated successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResource.error("INTERNAL_SERVER_ERROR", "Error", HttpStatus.INTERNAL_SERVER_ERROR)
+            );
+        }   
     }
 }

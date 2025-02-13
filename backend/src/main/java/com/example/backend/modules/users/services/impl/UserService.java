@@ -17,12 +17,15 @@ import com.example.backend.modules.users.entities.User;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.LoginRequest;
 import com.example.backend.modules.users.requests.User.StoreRequest;
+import com.example.backend.modules.users.requests.User.UpdateRequest;
 import com.example.backend.modules.users.resources.LoginResource;
 import com.example.backend.modules.users.resources.UserResource;
 import com.example.backend.modules.users.services.interfaces.UserServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseService;
 import com.example.backend.services.JwtService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.data.domain.Sort;
 
@@ -98,5 +101,25 @@ public class UserService extends BaseService implements UserServiceInterface {
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
         return userRepository.findByCatalogueId(catalogueId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public User edit(Long id, UpdateRequest request, Long editedBy) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        User payload = user.toBuilder()
+            .editedBy(editedBy)
+            .catalogueId(request.getCatalogueId())
+            .firstName(request.getFirstName())
+            .middleName(request.getMiddleName())
+            .lastName(request.getLastName())
+            .email(request.getEmail())
+            .phone(request.getPhone())
+            .password(request.getPassword())
+            .build();
+        
+        return userRepository.save(payload);
     }
 }

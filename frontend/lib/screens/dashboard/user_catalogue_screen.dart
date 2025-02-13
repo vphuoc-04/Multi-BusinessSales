@@ -278,7 +278,7 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                         Navigator.push(
                           context, 
                           MaterialPageRoute(
-                            builder: (context) => UserBelongCatalogueData(catalogueId: catalogue.id)
+                            builder: (context) => UserBelongCatalogueData(catalogue: catalogue)
                           )
                         );
                       }
