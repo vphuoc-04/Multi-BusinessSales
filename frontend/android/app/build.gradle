@@ -37,6 +37,22 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+
+    flavorDimensions "app"
+
+    productFlavors {
+        dashboard {
+            dimension "app"
+            applicationIdSuffix ".dashboard"
+            versionNameSuffix "-dashboard"
+        }
+
+        pos {
+            dimension "app"
+            applicationIdSuffix ".pos"
+            versionNameSuffix "-pos"
+        }
+    }
 }
 
 flutter {

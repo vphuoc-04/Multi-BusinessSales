@@ -8,12 +8,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend/main.dart';
+// Apps
+import 'package:frontend/apps/dashboard_app.dart';
+import 'package:frontend/apps/pos_app.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(initialRoute: '/',));
+    await tester.pumpWidget(const DashboardApp(initialRoute: '/dashboard/login',));
+    await tester.pumpWidget(const PosApp(initialRoute: '/pos/login',));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
