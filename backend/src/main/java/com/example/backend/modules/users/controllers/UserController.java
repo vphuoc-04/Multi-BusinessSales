@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,14 +40,19 @@ public class UserController {
     @Autowired 
     private JwtService jwtService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final UserServiceInterface userService;
 
     public UserController(
         UserServiceInterface userService,
-        JwtService jwtService
+        JwtService jwtService,
+        PasswordEncoder passwordEncoder
     ){
         this.userService = userService;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("user/{id}")
@@ -74,6 +80,9 @@ public class UserController {
 
             Long addedBy = Long.valueOf(userId);
 
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            request.setPassword(encodedPassword);
+
             User user = userService.add(request, addedBy);
 
             UserResource userResource = UserResource.builder()
@@ -86,7 +95,6 @@ public class UserController {
                 .lastName(user.getLastName())
                 .middleName(user.getMiddleName())
                 .phone(user.getPhone())
-                .password(user.getPassword())
                 .build();
 
             ApiResource<UserResource> response = ApiResource.ok(userResource, "New user added successfully");
@@ -133,6 +141,9 @@ public class UserController {
 
             Long updatedBy = Long.valueOf(userId);
 
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            request.setPassword(encodedPassword);
+
             User user = userService.edit(id, request, updatedBy);
             
             UserResource userResource = UserResource.builder()
@@ -145,7 +156,6 @@ public class UserController {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .password(user.getPassword())
                 .build();
                 
             ApiResource<UserResource> response = ApiResource.ok(userResource, "User updated successfully");

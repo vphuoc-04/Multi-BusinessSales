@@ -39,5 +39,5 @@ void main() async {
     }
   }
 
-  runApp(PosApp(initialRoute: token == null ? '/pos/login' : '/pos/home',));
+  runApp(PosApp(initialRoute: token == null ? '/pos/login' : '/pos/home', id: id,));
 }

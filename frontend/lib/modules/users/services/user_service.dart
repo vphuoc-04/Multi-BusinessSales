@@ -17,6 +17,41 @@ class UserService {
 
   final Auth auth = Auth();
 
+  // Get user info by id 
+  Future<User> user(int id) async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      throw Exception("Token is null. Please log in again.");
+    }
+
+    try {
+      final response = await userRepository.user(id, token: token);
+
+      if (response.statusCode == 200) {
+        return User.fromJson(json.decode(response.body));
+
+      } else if (response.statusCode == 401) {
+        print("Token expired during request. Attempting to refresh token...");
+
+        bool refreshToken = await auth.refreshToken();
+
+        if (refreshToken) {
+          return user(id);
+        } else {
+          print("Refresh token failed. Logging out completely.");
+          throw Exception("Refresh token failed, please log in again.");
+        }
+
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Failed to load user data!');
+      }
+    } catch (error) {
+      throw Exception('An error occurred while fetching users data!');
+    }
+  }
+
   // Add new user
   Future<Map<String, dynamic>> add(
     int catalogueId,

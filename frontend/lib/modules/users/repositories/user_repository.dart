@@ -4,6 +4,16 @@ import 'package:frontend/api/api.dart';
 class UserRepository {
   final Api api = Api();
 
+  // Get user info by id
+  Future<dynamic> user(int id, { required String token }) {
+    return api.get(
+      'user/$id',
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
+    );
+  }
+
   // Add new user
   Future<dynamic> add(
     int catalogueId,

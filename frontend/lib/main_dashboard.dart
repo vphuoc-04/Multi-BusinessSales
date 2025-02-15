@@ -39,5 +39,5 @@ void main() async {
     }
   }
 
-  runApp(DashboardApp(initialRoute: token == null ? '/dashboard/login' : '/dashboard',));
+  runApp(DashboardApp(initialRoute: token == null ? '/dashboard/login' : '/dashboard', id: id,));
 }
