@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class User {
   final int id;
   final int addedBy;
@@ -31,13 +33,13 @@ class User {
       addedBy: json['addedBy'] ?? 0,
       editedBy: json['editedBy'],
       catalogueId: json['catalogueId'] ?? 0,
-      firstName: json['firstName'] ?? '',
-      middleName: json['middleName'],
-      lastName: json['lastName'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      password: json['password'] ?? '',
-      img: json['img'] ?? '',
+      firstName: decodeUtf8(json['firstName']),
+      middleName: decodeUtf8(json['middleName']),
+      lastName: decodeUtf8(json['lastName']),
+      email: decodeUtf8(json['email']),
+      phone: decodeUtf8(json['phone']),
+      password: decodeUtf8(json['password']),
+      img: decodeUtf8(json['img']),
     );
   }
 
@@ -55,5 +57,10 @@ class User {
       'password': password,
       'img': img,
     };
+  }
+
+  static String decodeUtf8(dynamic value) {
+    if (value == null) return '';
+    return utf8.decode(value.toString().codeUnits);
   }
 }

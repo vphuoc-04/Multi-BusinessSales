@@ -96,7 +96,6 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
       setState(() {
         isLoading = false;
       });
-
     }
   }
 
@@ -270,18 +269,18 @@ class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => UserAdded(catalogueId: catalogue.id),
+                            builder: (context) => UserBelongCatalogueData(catalogue: catalogue),
                           ),
                         );
                       },
-                      onTapListUserBelongCatalogue: (UserCatalogue catalogue) {
+                      ontTapAddUserToCatalogue: (UserCatalogue cataloge) {
                         Navigator.push(
-                          context, 
+                          context,
                           MaterialPageRoute(
-                            builder: (context) => UserBelongCatalogueData(catalogue: catalogue)
-                          )
+                            builder: (context) => UserAdded(catalogueId: cataloge.id)
+                          ),
                         );
-                      }
+                      },
                     ), 
               ),
             ],

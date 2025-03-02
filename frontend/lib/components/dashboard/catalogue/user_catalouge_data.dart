@@ -13,7 +13,7 @@ class UserCatalougeData extends StatelessWidget {
   final Function(UserCatalogue) showUpdateDialog;
   final Function(UserCatalogue) showDeleteDialog;
   final Function(UserCatalogue) onTapCatalogue;
-  final Function(UserCatalogue) onTapListUserBelongCatalogue;
+    final Function(UserCatalogue) ontTapAddUserToCatalogue;
 
   const UserCatalougeData({
     super.key, 
@@ -21,7 +21,7 @@ class UserCatalougeData extends StatelessWidget {
     required this.showUpdateDialog,
     required this.showDeleteDialog,
     required this.onTapCatalogue,
-    required this.onTapListUserBelongCatalogue
+    required this.ontTapAddUserToCatalogue,
   });
 
   @override
@@ -42,8 +42,8 @@ class UserCatalougeData extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: () => onTapListUserBelongCatalogue(group),
-                icon: Icon(IconlyLight.user, color: myColor),
+                onPressed: () => ontTapAddUserToCatalogue(group),
+                icon: Icon(IconlyLight.add_user, color: myColor),
               ),
               IconButton(
                 onPressed: () => showUpdateDialog(group),
