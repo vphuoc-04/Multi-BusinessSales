@@ -32,8 +32,6 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .cors(withDefaults())
             .authorizeHttpRequests(auth -> auth
-
-                
                 .requestMatchers(
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh_token"

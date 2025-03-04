@@ -1,0 +1,15 @@
+ALTER TABLE attributes
+ADD COLUMN added_by BIGINT UNSIGNED DEFAULT NULL,
+ADD COLUMN edited_by BIGINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE attributes
+ADD CONSTRAINT fk_attributes_added_by
+FOREIGN KEY (added_by)
+REFERENCES users(id)
+ON DELETE CASCADE;
+
+ALTER TABLE attributes
+ADD CONSTRAINT fk_attributes_edited_by
+FOREIGN KEY (edited_by)
+REFERENCES users(id)
+ON DELETE CASCADE;

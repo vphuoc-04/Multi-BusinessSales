@@ -1,4 +1,4 @@
-package com.example.backend.modules.discounts.Enitites;
+package com.example.backend.modules.discounts.enitites;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "discounts")
 public class Discount {
-        @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     

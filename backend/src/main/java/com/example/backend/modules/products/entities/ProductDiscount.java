@@ -3,7 +3,7 @@ package com.example.backend.modules.products.entities;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.example.backend.modules.discounts.Enitites.Discount;
+import com.example.backend.modules.discounts.enitites.Discount;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

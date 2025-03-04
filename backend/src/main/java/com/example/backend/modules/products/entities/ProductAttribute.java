@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import com.example.backend.modules.attributes.entities.Attribute;
+import com.example.backend.modules.attributes.entities.AttributeValue;
 
 @Builder(toBuilder = true)
 @NoArgsConstructor
@@ -24,17 +24,17 @@ public class ProductAttribute {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private Long addedBy;
+    private Long editedBy;
     
     // Liên kết tới Product
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     
-    // Liên kết tới Attribute (entity Attribute đã được tạo)
+    // Liên kết tới AttributeValue (thay vì trực tiếp liên kết với Attribute)
     @ManyToOne
-    @JoinColumn(name = "attribute_id", nullable = false)
-    private Attribute attribute;
-    
-    // Nếu cần lưu giá trị cụ thể của thuộc tính đối với sản phẩm
-    private String value;   
+    @JoinColumn(name = "attribute_value_id", nullable = false)
+    private AttributeValue attributeValue;
 }

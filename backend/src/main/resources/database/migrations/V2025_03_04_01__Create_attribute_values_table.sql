@@ -1,10 +1,10 @@
-CREATE TABLE product_attributes (
-    product_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE attribute_values (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     attribute_id BIGINT UNSIGNED NOT NULL,
-    value VARCHAR(255),
-    PRIMARY KEY (product_id, attribute_id),
+    value VARCHAR(255) NOT NULL,
+    added_by BIGINT UNSIGNED DEFAULT NULL,
+    edited_by BIGINT UNSIGNED DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (attribute_id) REFERENCES attributes(id) ON DELETE CASCADE
 );
