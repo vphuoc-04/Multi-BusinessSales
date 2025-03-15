@@ -2,7 +2,7 @@ package com.example.backend.modules.products.entities;
 
 import java.time.LocalDateTime;
 
-import com.example.backend.modules.Suppliers.entities.Supplier;
+import com.example.backend.modules.suppliers.entities.Supplier;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,8 +39,8 @@ public class ProductSupplier {
     private Supplier supplier;
     
     // Các thông tin bổ sung (ví dụ: giá nhập, số lượng cung cấp, ...)
-    private Double purchasePrice;
-    private Integer supplyQuantity;
+    // private Double purchasePrice;
+    // private Integer supplyQuantity;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

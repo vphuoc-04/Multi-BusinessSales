@@ -3,6 +3,7 @@ import 'package:frontend/components/dashboard/layout/custom_sidebar.dart';
 
 // Screens
 import 'package:frontend/screens/dashboard/dashboard_screen.dart';
+import 'package:frontend/screens/dashboard/supplier_screen.dart';
 import 'package:frontend/screens/dashboard/user_catalogue_screen.dart';
 import 'package:frontend/screens/dashboard/product_category_screen.dart';
 
@@ -25,7 +26,8 @@ class _LayoutScreenState extends State<LayoutScreen> {
     screens = <Widget> [
       DashboardScreen(),
       UserCatalogueScreen(),
-      ProductCategoryScreen()
+      ProductCategoryScreen(),
+      SupplierScreen()
     ];
   }
 

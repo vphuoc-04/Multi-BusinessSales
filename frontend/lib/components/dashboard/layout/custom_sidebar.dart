@@ -42,7 +42,6 @@ class _CustomSidebarState extends State<CustomSidebar> {
       width: isExpanded ? 300 : 50,
       color: isExpanded ? myColor : Colors.transparent,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           SizedBox(height: 30),
           IconButton(
@@ -56,45 +55,61 @@ class _CustomSidebarState extends State<CustomSidebar> {
               });
             },
           ),
-          SidebarItem(
-            icon: IconlyLight.chart,
-            label: 'Dashboard',
-            isSelected: widget.selectedIndex == 0,
-            onTap: () => handleItemTap(0),
-            isExpanded: isExpanded, 
+          // Bọc danh sách menu bằng SingleChildScrollView
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SidebarItem(
+                    icon: IconlyLight.chart,
+                    label: 'Dashboard',
+                    isSelected: widget.selectedIndex == 0,
+                    onTap: () => handleItemTap(0),
+                    isExpanded: isExpanded, 
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.add_user, 
+                    label: 'User catalogue', 
+                    isSelected: widget.selectedIndex == 1, 
+                    onTap: () => handleItemTap(1), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.category, 
+                    label: 'Product category', 
+                    isSelected: widget.selectedIndex == 2, 
+                    onTap: () => handleItemTap(2), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.user, 
+                    label: 'Supplier', 
+                    isSelected: widget.selectedIndex == 3, 
+                    onTap: () => handleItemTap(3), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.logout,
+                    label: 'Logout',
+                    isSelected: false,
+                    onTap: () async {
+                      bool logout = await auth.logout();
+                      if (logout) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                        );
+                      } else {
+                        print("Error with logout");
+                      }
+                    },
+                    isExpanded: isExpanded,
+                  ),
+                ],
+              ),
+            ),
           ),
-          SidebarItem(
-            icon: IconlyLight.add_user, 
-            label: 'User catalogue', 
-            isSelected: widget.selectedIndex == 1, 
-            onTap: () => handleItemTap(1), 
-            isExpanded: isExpanded
-          ),
-          SidebarItem(
-            icon: IconlyLight.category, 
-            label: 'Product category', 
-            isSelected: widget.selectedIndex == 2, 
-            onTap: () => handleItemTap(2), 
-            isExpanded: isExpanded
-          ),
-          SidebarItem(
-            icon: IconlyLight.logout,
-            label: 'Logout',
-            isSelected: false,
-            onTap: () async {
-              bool logout = await auth.logout();
-              if (logout) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
-              } else {
-                print("Error with logout");
-              }
-            },
-            isExpanded: isExpanded,
-          ),
-        ]
+        ],
       ),
     );
   }
