@@ -13,9 +13,11 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -25,9 +27,11 @@ public class ProductImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long addedBy;
+    private Long editedBy;
     
     @Column(nullable = false)
-    private String url;
+    private String imageUrl;
     
     // Mỗi hình ảnh thuộc về 1 sản phẩm
     @ManyToOne
