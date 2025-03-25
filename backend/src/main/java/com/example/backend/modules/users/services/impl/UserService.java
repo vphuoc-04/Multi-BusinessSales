@@ -2,6 +2,8 @@ package com.example.backend.modules.users.services.impl;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.users.entities.User;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.LoginRequest;
@@ -31,6 +34,8 @@ import org.springframework.data.domain.Sort;
 
 @Service
 public class UserService extends BaseService implements UserServiceInterface {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
     @Autowired
     private JwtService jwtService;
 
@@ -97,6 +102,16 @@ public class UserService extends BaseService implements UserServiceInterface {
         int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
         String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
         Sort sort = createSort(sortParam);
+
+        String keyword = FilterParameter.filterKeyword(parameters);
+
+        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters); 
+
+        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
+
+        logger.info("Keyword: " + keyword);
+        logger.info("Filter simple: {}", filterSimple);
+        logger.info("FIlter complex: {}", filterComplex);
 
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 

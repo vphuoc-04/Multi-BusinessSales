@@ -2,6 +2,9 @@ package com.example.backend.modules.products.services.impl;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.ProductBrand;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
 import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
@@ -21,6 +25,8 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ProductBrandService extends BaseService implements ProductBrandServiceInterface {
+    private static final Logger logger = LoggerFactory.getLogger(ProductBrandService.class);
+
     @Autowired
     private ProductBrandRepository productBrandRepository;
 
@@ -60,6 +66,16 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
         int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
         String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
         Sort sort = createSort(sortParam);
+
+        String keyword = FilterParameter.filterKeyword(parameters);
+
+        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
+
+        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
+
+        logger.info("Keyword: " + keyword);
+        logger.info("Filter simple: {}", filterSimple );
+        logger.info("Filter complex: {}", filterComplex);
 
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 

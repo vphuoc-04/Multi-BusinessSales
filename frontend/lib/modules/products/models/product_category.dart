@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ProductCategory {
   final int id;
   final String name;
@@ -12,7 +14,7 @@ class ProductCategory {
   factory ProductCategory.fromJson (Map<String, dynamic> json) {
     return ProductCategory(
       id: json['id'] ?? 0, 
-      name: json['name'] ?? '', 
+      name: decodeUtf8(json['name'] ?? ''), 
       publish: json['publish'] ?? 0
     );
   }
@@ -23,5 +25,10 @@ class ProductCategory {
       'name': name,
       'publish': publish
     };
+  }
+
+  static String decodeUtf8(dynamic value) {
+    if (value == null) return '';
+    return utf8.decode(value.toString().codeUnits);
   }
 }

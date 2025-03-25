@@ -1,5 +1,7 @@
 package com.example.backend.modules.attributes.resources;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.Builder;
@@ -15,4 +17,5 @@ public class AttributeResource {
     private final String name;
     private final Long addedBy;
     private final Long editedBy;
+    private final List<AttributeValueResource> attributeValue;
 }

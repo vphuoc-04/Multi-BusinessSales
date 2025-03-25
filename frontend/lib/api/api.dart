@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -77,5 +78,55 @@ class Api {
         if (headers != null) ...headers,
       },
     );
+  }
+
+  // Multipart POST 
+  Future<http.StreamedResponse> multipartPost(
+    String endpoint, {
+    required Map<String, String> fields,
+    List<File>? files,
+    required String token,  
+  }) async {
+    final Uri url = urls(endpoint);
+    var request = http.MultipartRequest('POST', url);
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    fields.forEach((key, value) {
+      request.fields[key] = value;
+    });
+
+    if (files != null) {
+      for (var file in files) {
+        request.files.add(await http.MultipartFile.fromPath('images', file.path));
+      }
+    }
+
+    return await request.send();
+  }
+
+    // Multipart PUT
+  Future<http.StreamedResponse> multipartPut(
+    String endpoint, {
+    required Map<String, String> fields,
+    List<File>? files,
+    required String token,
+  }) async {
+    final Uri url = urls(endpoint);
+    var request = http.MultipartRequest('PUT', url);
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    fields.forEach((key, value) {
+      request.fields[key] = value;
+    });
+
+    if (files != null) {
+      for (var file in files) {
+        request.files.add(await http.MultipartFile.fromPath('images', file.path));
+      }
+    }
+
+    return await request.send();
   }
 }

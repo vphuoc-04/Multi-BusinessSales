@@ -54,7 +54,7 @@ public class Product {
     
     // Quan hệ N-1: Product - Brand (không cần bảng trung gian)
     @ManyToOne
-    @JoinColumn(name = "brand_id", nullable = false)
+    @JoinColumn(name = "brand_id", nullable = true)
     private ProductBrand brand;
     
     // Quan hệ N-N thông qua bảng trung gian: Product - Supplier

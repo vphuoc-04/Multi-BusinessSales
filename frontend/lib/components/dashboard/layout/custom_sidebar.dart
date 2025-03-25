@@ -55,7 +55,6 @@ class _CustomSidebarState extends State<CustomSidebar> {
               });
             },
           ),
-          // Bọc danh sách menu bằng SingleChildScrollView
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -86,6 +85,27 @@ class _CustomSidebarState extends State<CustomSidebar> {
                     label: 'Supplier', 
                     isSelected: widget.selectedIndex == 3, 
                     onTap: () => handleItemTap(3), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.user, 
+                    label: 'Brand', 
+                    isSelected: widget.selectedIndex == 4, 
+                    onTap: () => handleItemTap(4), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.category, 
+                    label: 'Product', 
+                    isSelected: widget.selectedIndex == 5, 
+                    onTap: () => handleItemTap(5), 
+                    isExpanded: isExpanded
+                  ),
+                  SidebarItem(
+                    icon: IconlyLight.activity, 
+                    label: 'Attribute', 
+                    isSelected: widget.selectedIndex == 6, 
+                    onTap: () => handleItemTap(6), 
                     isExpanded: isExpanded
                   ),
                   SidebarItem(

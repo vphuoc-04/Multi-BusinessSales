@@ -9,6 +9,6 @@ import com.example.backend.modules.attributes.requests.AttributeValue.UpdateRequ
 public interface AttributeValueServiceInterface {
     AttributeValue create(StoreRequest request, Long addedBy);
     AttributeValue update(Long id, UpdateRequest request, Long editedBy);
-    List<AttributeValue> getAllAttributeValues();
+    List<AttributeValue> getAttributeValuesByAttributeId(Long attributeId);
     boolean delete(Long id);
 }

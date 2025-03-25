@@ -1,7 +1,5 @@
 package com.example.backend.modules.products.requests.Product;
 
-import java.util.List;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -20,5 +18,5 @@ public class StoreRequest {
     @NotNull(message = "Price is required")
     private Double price;
 
-    private List<String> imageUrls;
+    private Long brandId;
 }

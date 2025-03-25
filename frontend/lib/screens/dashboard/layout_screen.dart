@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+
+// Components
 import 'package:frontend/components/dashboard/layout/custom_sidebar.dart';
+import 'package:frontend/screens/dashboard/attribute_screen.dart';
 
 // Screens
 import 'package:frontend/screens/dashboard/dashboard_screen.dart';
+import 'package:frontend/screens/dashboard/product_brand_screen.dart';
+import 'package:frontend/screens/dashboard/product_screen.dart';
 import 'package:frontend/screens/dashboard/supplier_screen.dart';
 import 'package:frontend/screens/dashboard/user_catalogue_screen.dart';
 import 'package:frontend/screens/dashboard/product_category_screen.dart';
@@ -27,7 +32,10 @@ class _LayoutScreenState extends State<LayoutScreen> {
       DashboardScreen(),
       UserCatalogueScreen(),
       ProductCategoryScreen(),
-      SupplierScreen()
+      SupplierScreen(),
+      ProductBrandScreen(),
+      ProductScreen(),
+      AttributeScreen()
     ];
   }
 

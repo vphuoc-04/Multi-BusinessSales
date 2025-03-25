@@ -103,10 +103,10 @@ public class AttributeValueController {
         }
     }
 
-    @GetMapping("/attribute_value")
-    public ResponseEntity<?> getAllAttributeValues() {
+    @GetMapping("/attribute_value/{attributeId}")
+    public ResponseEntity<?> getAttributeValuesByAttributeId(@PathVariable Long attributeId) {
         try {
-            List<AttributeValue> attributeValues = attributeValueService.getAllAttributeValues();
+            List<AttributeValue> attributeValues = attributeValueService.getAttributeValuesByAttributeId(attributeId);
 
             List<AttributeValueResource> attributeValueResources = attributeValues.stream()
                 .map(attributeValue -> {
@@ -117,17 +117,17 @@ public class AttributeValueController {
                             .name(attributeValue.getAttribute().getName())
                             .build();
                     }
-                    
+
                     return AttributeValueResource.builder()
                         .id(attributeValue.getId())
                         .value(attributeValue.getValue())
                         .addedBy(attributeValue.getAddedBy())
-                        .attribute(attributeResource) 
+                        .attribute(attributeResource)
                         .build();
                 })
                 .toList();
 
-            ApiResource<List<AttributeValueResource>> response = ApiResource.ok(attributeValueResources, "List of attributes");
+            ApiResource<List<AttributeValueResource>> response = ApiResource.ok(attributeValueResources, "List of attribute values by attributeId");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {

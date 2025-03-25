@@ -16,7 +16,7 @@ public class ProductResource {
     private final Long id;
     private final Long addedBy;
     private final Long editedBy;
-    private final Long productCatagoryId;
+    private final Long productCategoryId;
     private final String productCode;
     private final String name;
     private final Double price;

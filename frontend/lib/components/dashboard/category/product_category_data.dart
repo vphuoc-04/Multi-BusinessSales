@@ -11,12 +11,14 @@ class ProductCategoryData extends StatelessWidget {
   final List<ProductCategory> productCatagoriesList;
   final Function(ProductCategory) showUpdateDialog;
   final Function(ProductCategory) showDeleteDialog;
+  final Function(ProductCategory) onTapAddProductToCategory;
 
   const ProductCategoryData({
     super.key, 
     required this.productCatagoriesList,
     required this.showUpdateDialog,
-    required this.showDeleteDialog
+    required this.showDeleteDialog,
+    required this.onTapAddProductToCategory
   });
 
   @override
@@ -35,6 +37,10 @@ class ProductCategoryData extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              IconButton(
+                onPressed: () => onTapAddProductToCategory(group), 
+                icon: Icon(IconlyLight.paper_upload, color: myColor,)
+              ),
               IconButton(
                 onPressed: () => showUpdateDialog(group),
                 icon: Icon(IconlyLight.setting, color: myColor),

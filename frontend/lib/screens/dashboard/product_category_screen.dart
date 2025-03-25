@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/components/dashboard/category/product_added.dart';
 
 // Components
 import 'package:frontend/components/dashboard/category/product_category_data.dart';
@@ -264,6 +265,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                       productCatagoriesList: productCatagoriesList,
                       showUpdateDialog: showUpdateDialog,
                       showDeleteDialog: showDeleteDialog,
+                      onTapAddProductToCategory: (ProductCategory category) {
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => ProductAdded(productCategoryId: category.id),
+                          )
+                        );
+                      },
                     ), 
             ),
             ],

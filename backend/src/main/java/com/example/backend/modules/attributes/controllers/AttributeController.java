@@ -1,8 +1,11 @@
 package com.example.backend.modules.attributes.controllers;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,20 +19,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.attributes.entities.Attribute;
+import com.example.backend.modules.attributes.entities.AttributeValue;
+import com.example.backend.modules.attributes.repositories.AttributeValueRepository;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
 import com.example.backend.modules.attributes.requests.Attribute.UpdateRequest;
 import com.example.backend.modules.attributes.resources.AttributeResource;
+import com.example.backend.modules.attributes.resources.AttributeValueResource;
 import com.example.backend.modules.attributes.services.interfaces.AttributeServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.JwtService;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/v1")
 public class AttributeController {
     private final AttributeServiceInterface attributeService;
+
+    @Autowired
+    private AttributeValueRepository attributeValueRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -101,24 +111,32 @@ public class AttributeController {
     }
 
     @GetMapping("/attribute")
-    public ResponseEntity<?> getAllAttributes() {
-        try {
-            List<Attribute> attributes = attributeService.getAllAttributes();
+    public ResponseEntity<?> getAll(HttpServletRequest request) {
+        List<AttributeValue> attributeValue = attributeValueRepository.findAll();
 
-            List<AttributeResource> attributeResources = attributes.stream()
-                .map(attributeResource -> AttributeResource.builder()
-                    .id(attributeResource.getId())
-                    .name(attributeResource.getName())
-                    .addedBy(attributeResource.getAddedBy())
-                    .build())
-                .toList();
+        List<AttributeValueResource> attributeValueResources = attributeValue.stream()
+            .map(value -> AttributeValueResource.builder()
+                .value(value.getValue())
+                .addedBy(value.getAddedBy())
+                .editedBy(value.getEditedBy())
+                .build())
+            .collect(Collectors.toList());
 
-            ApiResource<List<AttributeResource>> response = ApiResource.ok(attributeResources, "List of attributes");
+        Map<String, String[]> parameters = request.getParameterMap();
+        Page<Attribute> attributes = attributeService.paginate(parameters);
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(ApiResource.message("NETWORK_ERROR", HttpStatus.UNAUTHORIZED));
-        }
+        Page<AttributeResource> attributeResource = attributes.map(attribute ->
+            AttributeResource.builder()
+                .name(attribute.getName())
+                .addedBy(attribute.getAddedBy())
+                .editedBy(attribute.getEditedBy())
+                .attributeValue(attributeValueResources)
+                .build()
+        );
+
+        ApiResource<Page<AttributeResource>> response = ApiResource.ok(attributeResource, "Attribute fetch success");
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/attribute/{id}")

@@ -1,11 +1,18 @@
 package com.example.backend.modules.attributes.services.impl;
 
-import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.attributes.entities.Attribute;
 import com.example.backend.modules.attributes.repositories.AttributeRepository;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
@@ -17,6 +24,8 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class AttributeService extends BaseService implements AttributeServiceInterface {
+    private static final Logger logger = LoggerFactory.getLogger(AttributeService.class);
+
     @Autowired
     private AttributeRepository attributeRepository;
 
@@ -51,8 +60,25 @@ public class AttributeService extends BaseService implements AttributeServiceInt
     }
 
     @Override
-    public List<Attribute> getAllAttributes() {
-        return attributeRepository.findAll();
+    public Page<Attribute> paginate(Map<String, String[]> parameters) {
+        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
+        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
+        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
+        Sort sort = createSort(sortParam);
+
+        String keyword = FilterParameter.filterKeyword(parameters);
+
+        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
+
+        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
+
+        logger.info("Keyword: " + keyword);
+        logger.info("Filter simple: {}", filterSimple );
+        logger.info("Filter complex: {}", filterComplex);
+
+        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
+
+        return attributeRepository.findAll(pageable);
     }
 
     @Override

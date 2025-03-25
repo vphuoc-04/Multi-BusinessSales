@@ -52,7 +52,7 @@ public class AttributeValueService extends BaseService implements AttributeValue
             .orElseThrow(() -> new EntityNotFoundException("Attribute value not found"));
 
         AttributeValue payload = attributeValue.toBuilder()
-            .value(attributeValue.getValue())
+            .value(request.getValue())
             .editedBy(editedBy)
             .build();
 
@@ -60,8 +60,8 @@ public class AttributeValueService extends BaseService implements AttributeValue
     }
 
     @Override
-    public List<AttributeValue> getAllAttributeValues() {
-        return attributeValueRepository.findAll();
+    public List<AttributeValue> getAttributeValuesByAttributeId(Long attributeId) {
+        return attributeValueRepository.findByAttributeId(attributeId);
     }
 
     @Override

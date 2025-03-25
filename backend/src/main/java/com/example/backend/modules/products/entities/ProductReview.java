@@ -20,14 +20,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name = "product_review")
+@Table(name = "product_reviews")
 public class ProductReview {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String reviewContent;
+    private String reviewText;
     
     @Column(nullable = false)
     private int rating;
