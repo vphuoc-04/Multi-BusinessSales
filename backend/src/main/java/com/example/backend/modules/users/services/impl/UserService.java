@@ -27,10 +27,12 @@ import com.example.backend.modules.users.services.interfaces.UserServiceInterfac
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseService;
 import com.example.backend.services.JwtService;
+import com.example.backend.specifications.BaseSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 @Service
 public class UserService extends BaseService implements UserServiceInterface {
@@ -113,9 +115,20 @@ public class UserService extends BaseService implements UserServiceInterface {
         logger.info("Filter simple: {}", filterSimple);
         logger.info("FIlter complex: {}", filterComplex);
 
+        Specification<User> specs = Specification.where(
+            BaseSpecification.<User>keywordSpec(keyword, "firstName")
+                .or(BaseSpecification.<User>keywordSpec(keyword, "middleName"))
+                .or(BaseSpecification.<User>keywordSpec(keyword, "lastName"))
+                .or(BaseSpecification.<User>keywordSpec(keyword, "phone"))
+                .or(BaseSpecification.<User>keywordSpec(keyword, "email"))
+        )
+        .and(BaseSpecification.<User>whereSpec(filterSimple))
+        .and(BaseSpecification.<User>complexWhereSpec(filterComplex))
+        .and((root, query, cb) -> cb.equal(root.get("catalogueId"), catalogueId));
+        
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return userRepository.findByCatalogueId(catalogueId, pageable);
+        return userRepository.findAll(specs, pageable);
     }
 
     @Override

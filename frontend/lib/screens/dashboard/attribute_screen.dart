@@ -65,7 +65,7 @@ class _AttributeScreenState extends State<AttributeScreen> {
       isLoading = true;
     });
     try {
-      final List<Attribute> response = await attributeService.fetchAttributes();
+      final response = await attributeService.fetchAttributes();
       setState(() {
         attributeList = response;
       });

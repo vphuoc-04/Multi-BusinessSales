@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +33,7 @@ import com.example.backend.modules.products.requests.Product.StoreRequest;
 import com.example.backend.modules.products.requests.Product.UpdateRequest;
 import com.example.backend.modules.products.services.interfaces.ProductServiceInterface;
 import com.example.backend.services.BaseService;
+import com.example.backend.specifications.BaseSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -164,9 +166,15 @@ public class ProductService extends BaseService implements ProductServiceInterfa
         logger.info("Filter simple: {}", filterSimple );
         logger.info("Filter complex: {}", filterComplex);
 
+        Specification<Product> specs = Specification.where(
+            BaseSpecification.<Product>keywordSpec(keyword, "name")
+        )
+        .and(BaseSpecification.<Product>whereSpec(filterSimple))
+        .and(BaseSpecification.<Product>complexWhereSpec(filterComplex));
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return productRepository.findAll(pageable);
+        return productRepository.findAll(specs, pageable);
     }
 
     @Override

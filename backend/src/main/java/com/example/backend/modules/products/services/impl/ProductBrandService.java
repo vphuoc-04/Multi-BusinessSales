@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
 import com.example.backend.modules.products.requests.ProductBrand.UpdateRequest;
 import com.example.backend.modules.products.services.interfaces.ProductBrandServiceInterface;
 import com.example.backend.services.BaseService;
+import com.example.backend.specifications.BaseSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -77,9 +79,15 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
         logger.info("Filter simple: {}", filterSimple );
         logger.info("Filter complex: {}", filterComplex);
 
+        Specification<ProductBrand> specs = Specification.where(
+            BaseSpecification.<ProductBrand>keywordSpec(keyword, "name")
+        )
+        .and(BaseSpecification.<ProductBrand>whereSpec(filterSimple))
+        .and(BaseSpecification.<ProductBrand>complexWhereSpec(filterComplex));
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return productBrandRepository.findAll(pageable);
+        return productBrandRepository.findAll(specs, pageable);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +19,9 @@ import com.example.backend.modules.attributes.repositories.AttributeRepository;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
 import com.example.backend.modules.attributes.requests.Attribute.UpdateRequest;
 import com.example.backend.modules.attributes.services.interfaces.AttributeServiceInterface;
+
 import com.example.backend.services.BaseService;
+import com.example.backend.specifications.BaseSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -76,9 +79,15 @@ public class AttributeService extends BaseService implements AttributeServiceInt
         logger.info("Filter simple: {}", filterSimple );
         logger.info("Filter complex: {}", filterComplex);
 
+        Specification<Attribute> specs = Specification.where(
+            BaseSpecification.<Attribute>keywordSpec(keyword, "name")
+        )
+        .and(BaseSpecification.<Attribute>whereSpec(filterSimple))
+        .and(BaseSpecification.<Attribute>complexWhereSpec(filterComplex));
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return attributeRepository.findAll(pageable);
+        return attributeRepository.findAll(specs, pageable);
     }
 
     @Override

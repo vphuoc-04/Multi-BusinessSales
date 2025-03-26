@@ -127,6 +127,7 @@ public class AttributeController {
 
         Page<AttributeResource> attributeResource = attributes.map(attribute ->
             AttributeResource.builder()
+                .id(attribute.getId())
                 .name(attribute.getName())
                 .addedBy(attribute.getAddedBy())
                 .editedBy(attribute.getEditedBy())

@@ -76,7 +76,7 @@ class AttributeService {
       final response = await attributeRepository.get(token: token);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<dynamic> attributes = data['data'];
+        List<dynamic> attributes = data['data']['content'];
 
         return attributes.map((attribute) => Attribute.fromJson(attribute)).toList();
       } else if (response.statusCode == 401) {

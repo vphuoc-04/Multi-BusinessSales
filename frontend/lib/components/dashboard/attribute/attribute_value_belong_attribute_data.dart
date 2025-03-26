@@ -79,7 +79,7 @@ class _AttributeValueBelongAttributeDataState extends State<AttributeValueBelong
                 setState(() { isLoading = true; });
                 try {
                   final response = await attributeValueService.update(
-                    attributeValue.id,
+                    attributeValue.id!,
                     newValue,
                     widget.attribute.id,
                   );
@@ -92,6 +92,7 @@ class _AttributeValueBelongAttributeDataState extends State<AttributeValueBelong
                                 id: item.id,
                                 value: newValue,
                                 attributeId: item.attributeId,
+                                addedBy: item.addedBy
                               )
                             : item;
                       }).toList();

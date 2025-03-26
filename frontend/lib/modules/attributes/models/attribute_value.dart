@@ -1,21 +1,27 @@
 import 'dart:convert';
 
 class AttributeValue {
-  final int id;
+  final int? id; 
   final String value;
   final int? attributeId;
+  final int addedBy;
+  final int? editedBy;
 
   AttributeValue({
-    required this.id,
+    this.id,
     required this.value,
-    this.attributeId
+    this.attributeId,
+    required this.addedBy,
+    this.editedBy,
   });
 
   factory AttributeValue.fromJson(Map<String, dynamic> json) {
     return AttributeValue(
       id: json['id'], 
-      value: json['value'], 
-      attributeId: json['attributeId']
+      value: json['value'] ?? '',
+      attributeId: json['attributeId'],
+      addedBy: json['addedBy'] ?? 0, 
+      editedBy: json['editedBy'],
     );
   }
 
@@ -23,7 +29,9 @@ class AttributeValue {
     return {
       'id': id,
       'value': value,
-      'attributeId': attributeId
+      'attributeId': attributeId,
+      'addedBy': addedBy,
+      'editedBy': editedBy,
     };
   }
 

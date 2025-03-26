@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import com.example.backend.modules.suppliers.requests.Supplier.StoreRequest;
 import com.example.backend.modules.suppliers.requests.Supplier.UpdateRequest;
 import com.example.backend.modules.suppliers.services.interfaces.SupplierServiceInterface;
 import com.example.backend.services.BaseService;
+import com.example.backend.specifications.BaseSpecification;
 
 @Service
 public class SupplierService extends BaseService implements SupplierServiceInterface {
@@ -104,9 +106,15 @@ public class SupplierService extends BaseService implements SupplierServiceInter
         logger.info("Filter simple: {}", filterSimple );
         logger.info("Filter complex: {}", filterComplex);
 
+        Specification<Supplier> specs = Specification.where(
+            BaseSpecification.<Supplier>keywordSpec(keyword, "name")
+        )
+        .and(BaseSpecification.<Supplier>whereSpec(filterSimple))
+        .and(BaseSpecification.<Supplier>complexWhereSpec(filterComplex));
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return supplierRepository.findAll(pageable);
+        return supplierRepository.findAll(specs, pageable);
     }
 
     @Override

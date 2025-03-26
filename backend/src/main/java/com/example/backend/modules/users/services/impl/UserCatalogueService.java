@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
 import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
 import com.example.backend.modules.users.services.interfaces.UserCatalogueServiceInterface;
 import com.example.backend.services.BaseService;
+import com.example.backend.specifications.BaseSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -62,9 +64,15 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
         logger.info("Filter simple: {}", filterSimple );
         logger.info("Filter complex: {}", filterComplex);
 
+        Specification<UserCatalogue> specs = Specification.where(
+            BaseSpecification.<UserCatalogue>keywordSpec(keyword, "name")
+        )
+        .and(BaseSpecification.<UserCatalogue>whereSpec(filterSimple))
+        .and(BaseSpecification.<UserCatalogue>complexWhereSpec(filterComplex));
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
 
-        return userCataloguesRepository.findAll(pageable);
+        return userCataloguesRepository.findAll(specs, pageable);
     }
 
     @Override
