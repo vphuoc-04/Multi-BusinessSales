@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.users.entities.UserCatalogue;
+import com.example.backend.modules.users.mappers.UserCatalogueMapper;
 import com.example.backend.modules.users.repositories.UserCatalogueRepository;
 import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
 import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
@@ -27,19 +28,23 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class UserCatalogueService extends BaseService implements UserCatalogueServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(UserCatalogueService.class);
+    private final UserCatalogueMapper userCatalogueMapper;
 
     @Autowired
     private UserCatalogueRepository userCataloguesRepository;
 
+    public UserCatalogueService(
+        UserCatalogueMapper userCatalogueMapper
+    ){
+        this.userCatalogueMapper = userCatalogueMapper;
+    }
+
     @Override
     @Transactional
-    public UserCatalogue create(StoreRequest request, Long createdBy) {
+    public UserCatalogue create(StoreRequest request, Long addedBy) {
         try {
-            UserCatalogue payload = UserCatalogue.builder()
-                .name(request.getName())
-                .publish(request.getPublish())
-                .createdBy(createdBy)
-                .build();
+            UserCatalogue payload = userCatalogueMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
 
             return userCataloguesRepository.save(payload);
         } catch (Exception e) {
@@ -55,9 +60,7 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -77,17 +80,14 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
 
     @Override
     @Transactional
-    public UserCatalogue update(Long id, UpdateRequest request, Long updatedBy) {
+    public UserCatalogue update(Long id, UpdateRequest request, Long editedBy) {
         UserCatalogue userCatalogue = userCataloguesRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("User catalogue not found"));
-        
-        UserCatalogue payload = userCatalogue.toBuilder()
-            .name(request.getName())
-            .publish(request.getPublish())
-            .updatedBy(updatedBy)
-            .build();    
 
-        return userCataloguesRepository.save(payload);
+        userCatalogueMapper.toUpdate(request, userCatalogue);
+        userCatalogue.setEditedBy(editedBy);
+
+        return userCataloguesRepository.save(userCatalogue);
     }
 
     @Override
@@ -97,7 +97,6 @@ public class UserCatalogueService extends BaseService implements UserCatalogueSe
             .orElseThrow(() -> new EntityNotFoundException("User catalogue not found"));
 
         userCataloguesRepository.delete(userCatalogue);
-
         return true;
     }
 }

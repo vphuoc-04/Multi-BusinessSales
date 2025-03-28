@@ -9,8 +9,8 @@ import com.example.backend.modules.products.requests.ProductCategory.StoreReques
 import com.example.backend.modules.products.requests.ProductCategory.UpdateRequest;
 
 public interface ProductCategoryServiceInterface {
-    ProductCategory create(StoreRequest request, Long createdBy);
+    ProductCategory create(StoreRequest request, Long addedBy);
     Page<ProductCategory> paginate(Map<String, String[]> parameters);
-    ProductCategory update(Long id, UpdateRequest request, Long updatedBy);
+    ProductCategory update(Long id, UpdateRequest request, Long editedBy);
     boolean delete(Long id);
 }

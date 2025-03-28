@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.ProductBrand;
+import com.example.backend.modules.products.mappers.ProductBrandMapper;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
 import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
 import com.example.backend.modules.products.requests.ProductBrand.UpdateRequest;
@@ -28,21 +29,25 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProductBrandService extends BaseService implements ProductBrandServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductBrandService.class);
+    private final ProductBrandMapper productBrandMapper;
 
     @Autowired
     private ProductBrandRepository productBrandRepository;
+
+    public ProductBrandService(
+        ProductBrandMapper productBrandMapper
+    ){
+        this.productBrandMapper = productBrandMapper;
+    }
 
     @Override
     @Transactional
     public ProductBrand create(StoreRequest request, Long addedBy) {
         try {
-            ProductBrand payload = ProductBrand.builder()
-                .name(request.getName())
-                .addedBy(addedBy)
-                .build();
+            ProductBrand payload = productBrandMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
 
             return productBrandRepository.save(payload);
-            
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage());
         }
@@ -51,15 +56,11 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
     @Override
     @Transactional
     public ProductBrand update(Long id, UpdateRequest request, Long editedBy) {
-        ProductBrand productBrand = productBrandRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Not found"));
+        ProductBrand productBrand = productBrandRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found"));
+        productBrandMapper.toUpdate(request, productBrand);
+        productBrand.setEditedBy(editedBy);
 
-        ProductBrand payload = productBrand.toBuilder()
-            .name(request.getName())
-            .editedBy(editedBy)
-            .build();
-
-        return productBrandRepository.save(payload);
+        return productBrandRepository.save(productBrand);
     }
 
     @Override
@@ -70,9 +71,7 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -97,7 +96,6 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
             .orElseThrow(() -> new EntityNotFoundException("Not found"));
 
         productBrandRepository.delete(productBrand);
-
         return true;
     }
 }

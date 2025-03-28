@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.users.entities.User;
+import com.example.backend.modules.users.mappers.UserMapper;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.LoginRequest;
 import com.example.backend.modules.users.requests.User.StoreRequest;
@@ -50,27 +51,25 @@ public class UserService extends BaseService implements UserServiceInterface {
     @Value("${jwt.defaultExpiration}")
     private Long defaultExpiration;
 
+    private final UserMapper userMapper;
+
+    public UserService(
+        UserMapper userMapper
+    ){
+        this.userMapper = userMapper;
+    }
+
     @Override
     public Object authenticate(LoginRequest request) {
         try {
             User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new BadCredentialsException("Incorrect email or password"));
-                if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-                    throw new BadCredentialsException("Incorrect email or password");
-                }
-                UserResource userResource = UserResource.builder()
-                    .id(user.getId())
-                    .firstName(user.getFirstName())
-                    .middleName(user.getMiddleName())
-                    .lastName(user.getLastName())
-                    .email(user.getEmail())
-                    .phone(user.getPhone())
-                    .build();
+            if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){ throw new BadCredentialsException("Incorrect email or password"); }
+            UserResource userResource = userMapper.toResource(user);
 
             String token = jwtService.generateToken(user.getId(), user.getEmail(), defaultExpiration);
             String refreshToken = jwtService.generateRefreshToken(user.getId(), user.getEmail());
             
             return new LoginResource(token, refreshToken, userResource);
-
         } catch (BadCredentialsException e) {
             return ApiResource.error("AUTH_ERROR", e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
@@ -80,19 +79,10 @@ public class UserService extends BaseService implements UserServiceInterface {
     @Transactional
     public User add(StoreRequest request, Long addedBy) {
         try {
-            User payload = User.builder()
-                .addedBy(addedBy)
-                .catalogueId(request.getCatalogueId())
-                .firstName(request.getFirstName())
-                .middleName(request.getMiddleName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .password(request.getPassword())
-                .build();
+            User payload = userMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
 
             return userRepository.save(payload);
-
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage());
         }
@@ -106,9 +96,7 @@ public class UserService extends BaseService implements UserServiceInterface {
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters); 
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -134,21 +122,11 @@ public class UserService extends BaseService implements UserServiceInterface {
     @Override
     @Transactional
     public User edit(Long id, UpdateRequest request, Long editedBy) {
-        User user = userRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        User payload = user.toBuilder()
-            .editedBy(editedBy)
-            .catalogueId(request.getCatalogueId())
-            .firstName(request.getFirstName())
-            .middleName(request.getMiddleName())
-            .lastName(request.getLastName())
-            .email(request.getEmail())
-            .phone(request.getPhone())
-            .password(request.getPassword())
-            .build();
+        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        userMapper.toUpdate(request, user);
+        user.setEditedBy(editedBy);
         
-        return userRepository.save(payload);
+        return userRepository.save(user);
     }
 
     @Override
@@ -158,7 +136,6 @@ public class UserService extends BaseService implements UserServiceInterface {
             .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         userRepository.delete(user);
-
         return true;
     }
 }

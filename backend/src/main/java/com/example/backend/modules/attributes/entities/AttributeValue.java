@@ -1,5 +1,6 @@
 package com.example.backend.modules.attributes.entities;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.backend.modules.products.entities.ProductAttribute;
@@ -13,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,4 +46,20 @@ public class AttributeValue {
     // Liên kết với ProductAttribute (để thể hiện giá trị này áp dụng cho sản phẩm nào)
     @OneToMany(mappedBy = "attributeValue", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductAttribute> productAttributes;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

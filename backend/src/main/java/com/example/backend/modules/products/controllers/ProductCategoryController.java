@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.products.entities.ProductCategory;
+import com.example.backend.modules.products.mappers.ProductCategoryMapper;
 import com.example.backend.modules.products.requests.ProductCategory.StoreRequest;
 import com.example.backend.modules.products.requests.ProductCategory.UpdateRequest;
 import com.example.backend.modules.products.resources.ProductCategoryResource;
@@ -32,15 +33,18 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1")
 public class ProductCategoryController {
     private final ProductCategoryServiceInterface productCategoryService;
+    private final ProductCategoryMapper productCategoryMapper;
 
     @Autowired
     private JwtService jwtService;
 
     public ProductCategoryController(
         ProductCategoryServiceInterface productCategoryService,
+        ProductCategoryMapper productCategoryMapper,
         JwtService jwtService
     ){
         this.productCategoryService = productCategoryService;
+        this.productCategoryMapper = productCategoryMapper;
         this.jwtService = jwtService;
     }
 
@@ -48,25 +52,14 @@ public class ProductCategoryController {
     public ResponseEntity<?> store(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long createdBy = Long.valueOf(userId);
 
             ProductCategory productCategory = productCategoryService.create(request, createdBy);
-
-            ProductCategoryResource productCategoryResource = ProductCategoryResource.builder()
-                .id(productCategory.getId())
-                .createdBy(productCategory.getCreatedBy())
-                .updatedBy(productCategory.getUpdatedBy())
-                .name(productCategory.getName())
-                .publish(productCategory.getPublish())
-                .build();
-
+            ProductCategoryResource productCategoryResource = productCategoryMapper.toResource(productCategory);
             ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product catagory added successfulyy");
 
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("Network error", HttpStatus.UNAUTHORIZED));
         }
@@ -75,19 +68,8 @@ public class ProductCategoryController {
     @GetMapping("/product_category")
     public ResponseEntity<?> index(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-
         Page<ProductCategory> productCategories = productCategoryService.paginate(parameters);
-
-        Page<ProductCategoryResource> productCategoryResource = productCategories.map(productCategory -> 
-            ProductCategoryResource.builder()
-                .id(productCategory.getId())
-                .createdBy(productCategory.getCreatedBy())
-                .updatedBy(productCategory.getUpdatedBy())
-                .name(productCategory.getName())
-                .publish(productCategory.getPublish())
-                .build()
-        );
-
+        Page<ProductCategoryResource> productCategoryResource = productCategoryMapper.toPageResource(productCategories);
         ApiResource<Page<ProductCategoryResource>> response = ApiResource.ok(productCategoryResource, "Product category data fetched successfully");
 
         return ResponseEntity.ok(response);
@@ -97,21 +79,11 @@ public class ProductCategoryController {
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long updatedBy = Long.valueOf(userId);
 
             ProductCategory productCategory = productCategoryService.update(id, request, updatedBy);
-            
-            ProductCategoryResource productCategoryResource = ProductCategoryResource.builder()
-                .id(productCategory.getId())
-                .createdBy(productCategory.getCreatedBy())
-                .updatedBy(productCategory.getUpdatedBy())
-                .name(productCategory.getName())
-                .publish(productCategory.getPublish())
-                .build();
-
+            ProductCategoryResource productCategoryResource = productCategoryMapper.toResource(productCategory);
             ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product category updated successfully");
 
             return ResponseEntity.ok(response);

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.attributes.entities.Attribute;
 import com.example.backend.modules.attributes.entities.AttributeValue;
+import com.example.backend.modules.attributes.mappers.AttributeMapper;
 import com.example.backend.modules.attributes.repositories.AttributeValueRepository;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
 import com.example.backend.modules.attributes.requests.Attribute.UpdateRequest;
@@ -37,6 +38,7 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1")
 public class AttributeController {
     private final AttributeServiceInterface attributeService;
+    private final AttributeMapper attributeMapper;
 
     @Autowired
     private AttributeValueRepository attributeValueRepository;
@@ -46,9 +48,11 @@ public class AttributeController {
 
     public AttributeController(
         AttributeServiceInterface attributeService,
+        AttributeMapper attributeMapper,
         JwtService jwtService
     ){
         this.attributeService = attributeService;
+        this.attributeMapper = attributeMapper;
         this.jwtService = jwtService;
     }
 
@@ -56,23 +60,14 @@ public class AttributeController {
     public ResponseEntity<?> store(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long addedBy = Long.valueOf(userId);
 
             Attribute attribute = attributeService.create(request, addedBy);
-
-            AttributeResource attributeResource = AttributeResource.builder()
-                .id(attribute.getId())
-                .name(attribute.getName())
-                .addedBy(addedBy)
-                .build();
-
+            AttributeResource attributeResource = attributeMapper.toResource(attribute);
             ApiResource<AttributeResource> response = ApiResource.ok(attributeResource, "Attribute added successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("NETWORK_ERROR", HttpStatus.UNAUTHORIZED));
         }
@@ -82,23 +77,14 @@ public class AttributeController {
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-            
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long editedBy = Long.valueOf(userId);
 
             Attribute attribute = attributeService.update(id, request, editedBy);
-
-            AttributeResource attributeResource = AttributeResource.builder()
-                .id(attribute.getId())
-                .name(attribute.getName())
-                .editedBy(editedBy)
-                .build();
-
+            AttributeResource attributeResource = attributeMapper.toResource(attribute);
             ApiResource<AttributeResource> response = ApiResource.ok(attributeResource, "Attribute edited successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)

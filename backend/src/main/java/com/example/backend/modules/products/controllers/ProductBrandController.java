@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.products.entities.ProductBrand;
+import com.example.backend.modules.products.mappers.ProductBrandMapper;
 import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
 import com.example.backend.modules.products.requests.ProductBrand.UpdateRequest;
 import com.example.backend.modules.products.resources.ProductBrandResource;
@@ -32,15 +33,18 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1")
 public class ProductBrandController {
     private final ProductBrandServiceInterface productBrandService;
+    private final ProductBrandMapper productBrandMapper;
 
     @Autowired
     private JwtService jwtService;
 
     public ProductBrandController(
         ProductBrandServiceInterface productBrandService,
+        ProductBrandMapper productBrandMapper,
         JwtService jwtService
     ){
         this.productBrandService = productBrandService;
+        this.productBrandMapper = productBrandMapper;
         this.jwtService = jwtService;
     }
 
@@ -48,24 +52,14 @@ public class ProductBrandController {
     public ResponseEntity<?> store(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long addedBy = Long.valueOf(userId);
 
             ProductBrand productBrand = productBrandService.create(request, addedBy);
-
-            ProductBrandResource productBrandResource = ProductBrandResource.builder()
-                .id(productBrand.getId())
-                .addedBy(productBrand.getAddedBy())
-                .editedBy(productBrand.getEditedBy())
-                .name(productBrand.getName())
-                .build();
-
+            ProductBrandResource productBrandResource = productBrandMapper.toResource(productBrand);
             ApiResource<ProductBrandResource> response = ApiResource.ok(productBrandResource, "Brand added successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("NETWORK_ERROR", HttpStatus.UNAUTHORIZED));
         }
@@ -75,24 +69,14 @@ public class ProductBrandController {
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long updatedBy = Long.valueOf(userId);
 
             ProductBrand productBrand = productBrandService.update(id, request, updatedBy);
-
-            ProductBrandResource productBrandResource = ProductBrandResource.builder()
-                .id(productBrand.getId())
-                .addedBy(productBrand.getAddedBy())
-                .editedBy(productBrand.getEditedBy())
-                .name(productBrand.getName())
-                .build();
-
+            ProductBrandResource productBrandResource = productBrandMapper.toResource(productBrand);
             ApiResource<ProductBrandResource> response = ApiResource.ok(productBrandResource, "Brand updated successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)
@@ -108,18 +92,8 @@ public class ProductBrandController {
     @GetMapping("/product_brand")
     public ResponseEntity<?> index(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-
         Page<ProductBrand> productBrands = productBrandService.paginate(parameters);
-
-        Page<ProductBrandResource> productBrandResource = productBrands.map(productBrand -> 
-            ProductBrandResource.builder()
-                .id(productBrand.getId())
-                .addedBy(productBrand.getAddedBy())
-                .editedBy(productBrand.getEditedBy())
-                .name(productBrand.getName())
-                .build()
-        );
-
+        Page<ProductBrandResource> productBrandResource = productBrandMapper.toPageResource(productBrands);
         ApiResource<Page<ProductBrandResource>> response = ApiResource.ok(productBrandResource, "Fetch list brand");
 
         return ResponseEntity.ok(response);

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.users.entities.User;
+import com.example.backend.modules.users.mappers.UserMapper;
 import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.User.StoreRequest;
 import com.example.backend.modules.users.requests.User.UpdateRequest;
@@ -44,13 +45,16 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
     private final UserServiceInterface userService;
+    private final UserMapper userMapper;
 
     public UserController(
         UserServiceInterface userService,
+        UserMapper userMapper,
         JwtService jwtService,
         PasswordEncoder passwordEncoder
     ){
         this.userService = userService;
+        this.userMapper = userMapper;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -58,16 +62,7 @@ public class UserController {
     @GetMapping("user/{id}")
     public ResponseEntity<?> user(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Not found!"));
-
-        UserResource userResource = UserResource.builder()
-            .id(user.getId())
-            .email(user.getEmail())
-            .firstName(user.getFirstName())
-            .middleName(user.getMiddleName())
-            .lastName(user.getLastName())
-            .phone(user.getPhone())
-            .build();
-
+        UserResource userResource = userMapper.toResource(user);
         return ResponseEntity.ok(userResource);
     }
 
@@ -75,32 +70,17 @@ public class UserController {
     public ResponseEntity<?> add(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long addedBy = Long.valueOf(userId);
 
             String encodedPassword = passwordEncoder.encode(request.getPassword());
             request.setPassword(encodedPassword);
 
             User user = userService.add(request, addedBy);
-
-            UserResource userResource = UserResource.builder()
-                .id(user.getId())
-                .catalogueId(user.getCatalogueId())
-                .addedBy(user.getAddedBy())
-                .editedBy(user.getEditedBy())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .middleName(user.getMiddleName())
-                .phone(user.getPhone())
-                .build();
-
+            UserResource userResource = userMapper.toResource(user);
             ApiResource<UserResource> response = ApiResource.ok(userResource, "New user added successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("Network error", HttpStatus.UNAUTHORIZED));
         } 
@@ -109,24 +89,8 @@ public class UserController {
     @GetMapping("/user_belong_cataloge/{catalogueId}")
     public ResponseEntity<?> getUsersByCatalogue(@PathVariable Long catalogueId, HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-
         Page<User> users = userService.paginate(catalogueId, parameters);
-
-        Page<UserResource> userResources = users.map(user -> 
-            UserResource.builder()
-                .id(user.getId())
-                .catalogueId(user.getCatalogueId())
-                .addedBy(user.getAddedBy())
-                .editedBy(user.getEditedBy())
-                .firstName(user.getFirstName())
-                .middleName(user.getMiddleName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .password(user.getPassword())
-                .build()
-        );
-
+        Page<UserResource> userResources = userMapper.toPageResource(users);
         ApiResource<Page<UserResource>> response = ApiResource.ok(userResources, "List user of user catalogue fetched successfully");
 
         return ResponseEntity.ok(response);
@@ -136,28 +100,14 @@ public class UserController {
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long updatedBy = Long.valueOf(userId);
-
+            
             String encodedPassword = passwordEncoder.encode(request.getPassword());
             request.setPassword(encodedPassword);
 
             User user = userService.edit(id, request, updatedBy);
-            
-            UserResource userResource = UserResource.builder()
-                .id(user.getId())
-                .addedBy(user.getAddedBy())
-                .editedBy(user.getEditedBy())
-                .catalogueId(user.getCatalogueId())
-                .firstName(user.getFirstName())
-                .middleName(user.getMiddleName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .build();
-                
+            UserResource userResource = userMapper.toResource(user);  
             ApiResource<UserResource> response = ApiResource.ok(userResource, "User updated successfully");
 
             return ResponseEntity.ok(response);

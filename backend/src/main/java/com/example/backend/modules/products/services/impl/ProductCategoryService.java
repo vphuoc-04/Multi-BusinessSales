@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.ProductCategory;
+import com.example.backend.modules.products.mappers.ProductCategoryMapper;
 import com.example.backend.modules.products.repositories.ProductCategoryRepository;
 import com.example.backend.modules.products.requests.ProductCategory.StoreRequest;
 import com.example.backend.modules.products.requests.ProductCategory.UpdateRequest;
@@ -27,22 +28,25 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProductCategoryService extends BaseService implements ProductCategoryServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductCategoryService.class);
+    private final ProductCategoryMapper productCategoryMapper;
 
     @Autowired
     private ProductCategoryRepository productCategoryRepository;
 
+    public ProductCategoryService(
+        ProductCategoryMapper productCategoryMapper
+    ){
+        this.productCategoryMapper = productCategoryMapper;
+    }
+
     @Override
     @Transactional
-    public ProductCategory create(StoreRequest request, Long createdBy) {
+    public ProductCategory create(StoreRequest request, Long addedBy) {
         try {
-            ProductCategory payload = ProductCategory.builder()
-                .name(request.getName())
-                .publish(request.getPublish())
-                .createdBy(createdBy)
-                .build();
+            ProductCategory payload = productCategoryMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
 
             return productCategoryRepository.save(payload);
-
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage());
         }
@@ -56,9 +60,7 @@ public class ProductCategoryService extends BaseService implements ProductCatego
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -78,17 +80,14 @@ public class ProductCategoryService extends BaseService implements ProductCatego
 
     @Override
     @Transactional
-    public ProductCategory update(Long id, UpdateRequest request, Long updatedBy) {
+    public ProductCategory update(Long id, UpdateRequest request, Long editedBy) {
         ProductCategory productCategory = productCategoryRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Product category not found"));
         
-        ProductCategory payload = productCategory.toBuilder()
-            .name(request.getName())
-            .publish(request.getPublish())
-            .updatedBy(updatedBy)
-            .build();    
+        productCategoryMapper.toUpdate(request, productCategory);
+        productCategory.setEditedBy(editedBy);
 
-        return productCategoryRepository.save(payload);
+        return productCategoryRepository.save(productCategory);
     }
 
     @Override
@@ -98,7 +97,6 @@ public class ProductCategoryService extends BaseService implements ProductCatego
             .orElseThrow(() -> new EntityNotFoundException("Product category not found"));
 
         productCategoryRepository.delete(productCategory);
-
         return true;
     }
 }

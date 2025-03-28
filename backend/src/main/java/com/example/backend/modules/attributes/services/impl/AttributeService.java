@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.attributes.entities.Attribute;
+import com.example.backend.modules.attributes.mappers.AttributeMapper;
 import com.example.backend.modules.attributes.repositories.AttributeRepository;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
 import com.example.backend.modules.attributes.requests.Attribute.UpdateRequest;
@@ -28,21 +29,25 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class AttributeService extends BaseService implements AttributeServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(AttributeService.class);
+    private final AttributeMapper attributeMapper;
 
     @Autowired
     private AttributeRepository attributeRepository;
+
+    public AttributeService(
+        AttributeMapper attributeMapper
+    ){
+        this.attributeMapper = attributeMapper;
+    }
 
     @Override
     @Transactional
     public Attribute create(StoreRequest request, Long addedBy) {
         try {
-            Attribute payload = Attribute.builder()
-                .name(request.getName())
-                .addedBy(addedBy)
-                .build();
+            Attribute payload = attributeMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
             
             return attributeRepository.save(payload);
-
         } catch (Exception e) {
             throw new RuntimeException("Transactional failed: " + e.getMessage());
         }
@@ -51,15 +56,11 @@ public class AttributeService extends BaseService implements AttributeServiceInt
     @Override
     @Transactional
     public Attribute update(Long id, UpdateRequest request, Long editedBy) {
-        Attribute attribute = attributeRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Attribute not found"));
+        Attribute attribute = attributeRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Attribute not found"));
+        attributeMapper.toUpdate(request, attribute);
+        attribute.setEditedBy(editedBy);
 
-        Attribute payload = attribute.toBuilder()
-            .name(request.getName())
-            .editedBy(editedBy)
-            .build();
-
-        return attributeRepository.save(payload);
+        return attributeRepository.save(attribute);
     }
 
     @Override
@@ -70,9 +71,7 @@ public class AttributeService extends BaseService implements AttributeServiceInt
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -97,7 +96,6 @@ public class AttributeService extends BaseService implements AttributeServiceInt
             .orElseThrow(() -> new EntityNotFoundException("Attribute not found"));
 
         attributeRepository.delete(attribute);
-
         return true;
     }
 }

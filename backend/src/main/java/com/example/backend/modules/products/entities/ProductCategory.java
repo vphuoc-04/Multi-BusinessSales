@@ -26,8 +26,8 @@ public class ProductCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private Long createdBy;
-    private Long updatedBy;
+    private Long addedBy;
+    private Long editedBy;
     
     @Column(name = "publish", nullable = false, columnDefinition = "TINYINT")
     private Integer publish;

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.suppliers.entities.Supplier;
+import com.example.backend.modules.suppliers.mappers.SupplierMapper;
 import com.example.backend.modules.suppliers.services.interfaces.SupplierServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.modules.suppliers.requests.Supplier.StoreRequest;
@@ -32,15 +33,18 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1")
 public class SupplierController {
     private final SupplierServiceInterface supplierService;
+    private final SupplierMapper supplierMapper;
 
     @Autowired
     private JwtService jwtService;
     
     public SupplierController(
         SupplierServiceInterface supplierService,
+        SupplierMapper supplierMapper,
         JwtService jwtService
     ){
         this.supplierService = supplierService;
+        this.supplierMapper = supplierMapper;
         this.jwtService = jwtService;
     }
 
@@ -48,24 +52,14 @@ public class SupplierController {
     public ResponseEntity<?> add(@Valid @RequestBody StoreRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long addedBy = Long.valueOf(userId);
 
             Supplier supplier = supplierService.create(request, addedBy);
-
-            SupplierResource supplierResource = SupplierResource.builder()
-                .id(supplier.getId())
-                .addedBy(supplier.getAddedBy())
-                .editedBy(supplier.getEditedBy())
-                .name(supplier.getName())
-                .build();
-
+            SupplierResource supplierResource = supplierMapper.toResource(supplier);
             ApiResource<SupplierResource> response = ApiResource.ok(supplierResource, "New supplier updated successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResource.message("Network error", HttpStatus.UNAUTHORIZED));
         } 
@@ -75,24 +69,14 @@ public class SupplierController {
     public ResponseEntity<?> add(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, @RequestHeader("Authorization") String bearerToken) {
         try {
             String token = bearerToken.substring(7);
-
             String userId = jwtService.getUserIdFromJwt(token);
-
             Long addedBy = Long.valueOf(userId);
 
             Supplier supplier = supplierService.update(id, request, addedBy);
-
-            SupplierResource supplierResource = SupplierResource.builder()
-                .id(supplier.getId())
-                .addedBy(supplier.getAddedBy())
-                .editedBy(supplier.getEditedBy())
-                .name(supplier.getName())
-                .build();
-
+            SupplierResource supplierResource = supplierMapper.toResource(supplier);
             ApiResource<SupplierResource> response = ApiResource.ok(supplierResource, "New supplier added successfully");
 
             return ResponseEntity.ok(response);
-
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)
@@ -107,18 +91,8 @@ public class SupplierController {
     @GetMapping("/supplier") 
     public ResponseEntity<?> index(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-
         Page<Supplier> suppliers = supplierService.paginate(parameters);
-
-        Page<SupplierResource> supplierResource = suppliers.map(supplier -> 
-            SupplierResource.builder()
-                .id(supplier.getId())
-                .addedBy(supplier.getAddedBy())
-                .editedBy(supplier.getEditedBy())
-                .name(supplier.getName())
-                .build()
-        );
-
+        Page<SupplierResource> supplierResource = supplierMapper.toPageResource(suppliers);
         ApiResource<Page<SupplierResource>> response = ApiResource.ok(supplierResource, "Suppliers data fetch successfully");
 
         return ResponseEntity.ok(response);

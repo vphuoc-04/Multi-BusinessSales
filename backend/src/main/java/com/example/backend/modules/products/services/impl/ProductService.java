@@ -26,6 +26,7 @@ import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.Product;
 import com.example.backend.modules.products.entities.ProductBrand;
 import com.example.backend.modules.products.entities.ProductImage;
+import com.example.backend.modules.products.mappers.ProductMapper;
 import com.example.backend.modules.products.repositories.ProductRepository;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
 import com.example.backend.modules.products.repositories.ProductImageRepository;
@@ -40,6 +41,7 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProductService extends BaseService implements ProductServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
+    private final ProductMapper productMapper;
 
     @Autowired
     private ProductRepository productRepository;
@@ -49,6 +51,12 @@ public class ProductService extends BaseService implements ProductServiceInterfa
 
     @Autowired
     private ProductBrandRepository productBrandRepository;
+
+    public ProductService(
+        ProductMapper productMapper
+    ){
+        this.productMapper = productMapper;
+    }
 
     @Override
     @Transactional
@@ -60,14 +68,9 @@ public class ProductService extends BaseService implements ProductServiceInterfa
                     .orElseThrow(() -> new RuntimeException("Brand not found"));
             }
 
-            Product payload = Product.builder()
-                .productCategoryId(request.getProductCategoryId())
-                .productCode(request.getProductCode())
-                .name(request.getName())
-                .price(request.getPrice())
-                .addedBy(addedBy)
-                .brand(brand)
-                .build();
+            Product payload = productMapper.toCreate(request);
+            payload.setAddedBy(addedBy);
+            payload.setBrand(brand);
 
             Product product = productRepository.save(payload);
 
@@ -90,6 +93,7 @@ public class ProductService extends BaseService implements ProductServiceInterfa
                 }
 
                 productImageRepository.saveAll(imageList);
+                product.setImages(imageList);
             }
 
             return product;
@@ -111,21 +115,18 @@ public class ProductService extends BaseService implements ProductServiceInterfa
                     .orElseThrow(() -> new RuntimeException("Brand not found"));
             }
     
-            product.setProductCategoryId(request.getProductCategoryId());
-            product.setProductCode(request.getProductCode());
-            product.setName(request.getName());
-            product.setPrice(request.getPrice());
+            productMapper.toUpdate(request, product);
             product.setBrand(brand);
             product.setEditedBy(editedBy);
     
-            Product updatedProduct = productRepository.save(product);
-    
             if (images != null && images.length > 0) {
-                productImageRepository.deleteByProductId(product.getId());
+                if (product.getImages() != null) {
+                    product.getImages().clear();
+                } else {
+                    product.setImages(new ArrayList<>());
+                }
     
-                List<ProductImage> imageList = new ArrayList<>();
                 String uploadDir = "../frontend/assets/uploads/";
-    
                 for (MultipartFile image : images) {
                     String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
                     Path filePath = Paths.get(uploadDir + filename);
@@ -134,15 +135,20 @@ public class ProductService extends BaseService implements ProductServiceInterfa
     
                     ProductImage productImage = ProductImage.builder()
                             .imageUrl("/assets/uploads/" + filename)
-                            .product(updatedProduct)
+                            .product(product)
                             .addedBy(editedBy)
                             .build();
-                    imageList.add(productImage);
+                    product.getImages().add(productImage);
                 }
-    
-                productImageRepository.saveAll(imageList);
             }
-    
+            Product updatedProduct = productRepository.save(product);
+            logger.info("Images after update, size: {}", 
+                updatedProduct.getImages() != null ? updatedProduct.getImages().size() : 0);
+            if (updatedProduct.getImages() != null) {
+                updatedProduct.getImages().forEach(img -> 
+                    logger.info("Image URL: {}", img.getImageUrl()));
+            }
+
             return updatedProduct;
         } catch (Exception e) {
             throw new RuntimeException("Update transaction failed: " + e.getMessage());
@@ -157,9 +163,7 @@ public class ProductService extends BaseService implements ProductServiceInterfa
         Sort sort = createSort(sortParam);
 
         String keyword = FilterParameter.filterKeyword(parameters);
-
         Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-
         Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
 
         logger.info("Keyword: " + keyword);
@@ -184,7 +188,6 @@ public class ProductService extends BaseService implements ProductServiceInterfa
             .orElseThrow(() -> new EntityNotFoundException("Not found"));
 
         productRepository.delete(product);
-        
         return true;
     } 
 }

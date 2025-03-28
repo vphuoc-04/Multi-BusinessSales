@@ -1,9 +1,5 @@
 package com.example.backend.modules.products.controllers;
-import java.util.List;
 import java.util.Map;
-
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.backend.modules.products.entities.Product;
-import com.example.backend.modules.products.entities.ProductImage;
+import com.example.backend.modules.products.mappers.ProductMapper;
 import com.example.backend.modules.products.requests.Product.StoreRequest;
 import com.example.backend.modules.products.requests.Product.UpdateRequest;
 import com.example.backend.modules.products.resources.ProductResource;
@@ -37,15 +33,19 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("api/v1")
 public class ProductController {
     private final ProductServiceInterface productService;
-    //private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+    private final ProductMapper productMapper;
 
     @Autowired
     private JwtService jwtService;
 
     public ProductController(
-        ProductServiceInterface productService
+        ProductServiceInterface productService,
+        ProductMapper productMapper,
+        JwtService jwtService
     ){
         this.productService = productService;
+        this.productMapper = productMapper;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/product")
@@ -59,20 +59,7 @@ public class ProductController {
             Long addedBy = Long.valueOf(userId);
 
             Product product = productService.create(request, images, addedBy);
-
-            ProductResource productResource = ProductResource.builder()
-                    .id(product.getId())
-                    .addedBy(product.getAddedBy())
-                    .editedBy(product.getEditedBy())
-                    .productCode(product.getProductCode())
-                    .name(product.getName())
-                    .price(product.getPrice())
-                    .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
-                    .productCategoryId(product.getProductCategoryId())
-                    .imageUrls(product.getImages() != null 
-                        ? product.getImages().stream().map(ProductImage::getImageUrl).toList() 
-                        : List.of())
-                    .build();
+            ProductResource productResource = productMapper.toResource(product);
 
             return ResponseEntity.ok(ApiResource.ok(productResource, "Product created successfully"));
         } catch (Exception e) {
@@ -94,20 +81,9 @@ public class ProductController {
             Long editedBy = Long.valueOf(userId);
     
             Product product = productService.update(id, request, images, editedBy);
-    
-            ProductResource productResource = ProductResource.builder()
-                .id(product.getId())
-                .addedBy(product.getAddedBy())
-                .editedBy(product.getEditedBy())
-                .productCode(product.getProductCode())
-                .name(product.getName())
-                .price(product.getPrice())
-                .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
-                .productCategoryId(product.getProductCategoryId())
-                .imageUrls(product.getImages().stream().map(ProductImage::getImageUrl).toList())
-                .build();
-    
+            ProductResource productResource = productMapper.toResource(product);
             ApiResource<ProductResource> response = ApiResource.ok(productResource, "Product updated successfully");
+
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -123,26 +99,9 @@ public class ProductController {
     @GetMapping("/product")
     public ResponseEntity<?> index(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-
         Page<Product> products = productService.paginate(parameters);
-
-        Page<ProductResource> productResource = products.map(product->
-            ProductResource.builder()
-            .id(product.getId())
-            .addedBy(product.getAddedBy())
-            .editedBy(product.getEditedBy())
-            .productCode(product.getProductCode())
-            .name(product.getName())
-            .price(product.getPrice())
-            .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
-            .imageUrls(product.getImages() != null 
-                ? product.getImages().stream().map(ProductImage::getImageUrl).toList() 
-                : List.of())
-            .build()
-        );
-
+        Page<ProductResource> productResource = productMapper.toPageResource(products);
         ApiResource<Page<ProductResource>> response = ApiResource.ok(productResource, "Fetch product data successfully");
-
         return ResponseEntity.ok(response);
     }
 
