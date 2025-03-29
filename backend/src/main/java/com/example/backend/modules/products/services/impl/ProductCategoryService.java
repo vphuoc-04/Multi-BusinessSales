@@ -1,19 +1,10 @@
 package com.example.backend.modules.products.services.impl;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.example.backend.helpers.FilterParameter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import com.example.backend.modules.products.entities.ProductCategory;
 import com.example.backend.modules.products.mappers.ProductCategoryMapper;
 import com.example.backend.modules.products.repositories.ProductCategoryRepository;
@@ -21,12 +12,15 @@ import com.example.backend.modules.products.requests.ProductCategory.StoreReques
 import com.example.backend.modules.products.requests.ProductCategory.UpdateRequest;
 import com.example.backend.modules.products.services.interfaces.ProductCategoryServiceInterface;
 import com.example.backend.services.BaseService;
-import com.example.backend.specifications.BaseSpecification;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @Service
-public class ProductCategoryService extends BaseService implements ProductCategoryServiceInterface {
+public class ProductCategoryService extends BaseService<
+    ProductCategory,
+    ProductCategoryMapper,
+    StoreRequest,
+    UpdateRequest,
+    ProductCategoryRepository
+>implements ProductCategoryServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductCategoryService.class);
     private final ProductCategoryMapper productCategoryMapper;
 
@@ -40,63 +34,29 @@ public class ProductCategoryService extends BaseService implements ProductCatego
     }
 
     @Override
-    @Transactional
-    public ProductCategory create(StoreRequest request, Long addedBy) {
-        try {
-            ProductCategory payload = productCategoryMapper.toCreate(request);
-            payload.setAddedBy(addedBy);
+    protected String[] getSearchFields() {
+        return new String[]{"name"};
+    }
 
-            return productCategoryRepository.save(payload);
-        } catch (Exception e) {
-            throw new RuntimeException("Transaction failed: " + e.getMessage());
+    @Override
+    protected ProductCategoryRepository getRepository() {
+        return productCategoryRepository;
+    }
+
+    @Override 
+    protected ProductCategoryMapper getMapper() {
+        return productCategoryMapper;
+    }
+
+    @Override
+    protected void preSave(ProductCategory entity, Long addedBy, Long editedBy) {
+        if (addedBy != null) {
+            entity.setAddedBy(addedBy);
+            logger.info("Set addedBy: {}", addedBy);
         }
-    }
-
-    @Override
-    public Page<ProductCategory> paginate(Map<String, String[]> parameters) {
-        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
-        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
-        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
-        Sort sort = createSort(sortParam);
-
-        String keyword = FilterParameter.filterKeyword(parameters);
-        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
-
-        logger.info("Keyword: " + keyword);
-        logger.info("Filter simple: {}", filterSimple );
-        logger.info("Filter complex: {}", filterComplex);
-
-        Specification<ProductCategory> specs = Specification.where(
-            BaseSpecification.<ProductCategory>keywordSpec(keyword, "name")
-        )
-        .and(BaseSpecification.<ProductCategory>whereSpec(filterSimple))
-        .and(BaseSpecification.<ProductCategory>complexWhereSpec(filterComplex));
-
-        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
-
-        return productCategoryRepository.findAll(specs, pageable);
-    }
-
-    @Override
-    @Transactional
-    public ProductCategory update(Long id, UpdateRequest request, Long editedBy) {
-        ProductCategory productCategory = productCategoryRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Product category not found"));
-        
-        productCategoryMapper.toUpdate(request, productCategory);
-        productCategory.setEditedBy(editedBy);
-
-        return productCategoryRepository.save(productCategory);
-    }
-
-    @Override
-    @Transactional
-    public boolean delete(Long id) {
-        ProductCategory productCategory = productCategoryRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Product category not found"));
-
-        productCategoryRepository.delete(productCategory);
-        return true;
+        if (editedBy != null) {
+            entity.setEditedBy(editedBy);
+            logger.info("Set editedBy: {}", editedBy);
+        }
     }
 }

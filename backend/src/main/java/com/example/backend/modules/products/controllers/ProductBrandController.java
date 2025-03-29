@@ -55,7 +55,7 @@ public class ProductBrandController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long addedBy = Long.valueOf(userId);
 
-            ProductBrand productBrand = productBrandService.create(request, addedBy);
+            ProductBrand productBrand = productBrandService.add(request, addedBy);
             ProductBrandResource productBrandResource = productBrandMapper.toResource(productBrand);
             ApiResource<ProductBrandResource> response = ApiResource.ok(productBrandResource, "Brand added successfully");
 
@@ -72,7 +72,7 @@ public class ProductBrandController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long updatedBy = Long.valueOf(userId);
 
-            ProductBrand productBrand = productBrandService.update(id, request, updatedBy);
+            ProductBrand productBrand = productBrandService.edit(id, request, updatedBy);
             ProductBrandResource productBrandResource = productBrandMapper.toResource(productBrand);
             ApiResource<ProductBrandResource> response = ApiResource.ok(productBrandResource, "Brand updated successfully");
 

@@ -55,7 +55,7 @@ public class UserCatalogueController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long createdBy = Long.valueOf(userId);
 
-            UserCatalogue userCatalogue = userCatagoluesService.create(request, createdBy);
+            UserCatalogue userCatalogue = userCatagoluesService.add(request, createdBy);
             UserCatalogueResource userCatalogueResource = userCatalogueMapper.toResource(userCatalogue);
             ApiResource<UserCatalogueResource> response = ApiResource.ok(userCatalogueResource, "New user catalogue added successfully");
 
@@ -81,7 +81,7 @@ public class UserCatalogueController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long updatedBy = Long.valueOf(userId);
 
-            UserCatalogue userCatalogue = userCatagoluesService.update(id, request, updatedBy);
+            UserCatalogue userCatalogue = userCatagoluesService.edit(id, request, updatedBy);
             UserCatalogueResource userCatalogueResource = userCatalogueMapper.toResource(userCatalogue);
             ApiResource<UserCatalogueResource> response = ApiResource.ok(userCatalogueResource, "User catalogue updated successfully");
 

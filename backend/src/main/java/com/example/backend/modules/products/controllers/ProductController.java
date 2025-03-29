@@ -58,7 +58,7 @@ public class ProductController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long addedBy = Long.valueOf(userId);
 
-            Product product = productService.create(request, images, addedBy);
+            Product product = productService.add(request, images, addedBy);
             ProductResource productResource = productMapper.toResource(product);
 
             return ResponseEntity.ok(ApiResource.ok(productResource, "Product created successfully"));
@@ -80,7 +80,7 @@ public class ProductController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long editedBy = Long.valueOf(userId);
     
-            Product product = productService.update(id, request, images, editedBy);
+            Product product = productService.edit(id, request, images, editedBy);
             ProductResource productResource = productMapper.toResource(product);
             ApiResource<ProductResource> response = ApiResource.ok(productResource, "Product updated successfully");
 

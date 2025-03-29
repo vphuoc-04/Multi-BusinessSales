@@ -10,8 +10,8 @@ import com.example.backend.modules.products.requests.Product.StoreRequest;
 import com.example.backend.modules.products.requests.Product.UpdateRequest;
 
 public interface ProductServiceInterface {
-    Product create(StoreRequest request, MultipartFile[] images, Long addedBy);
-    Product update(Long id, UpdateRequest request, MultipartFile[] images, Long editedBy);
+    Product add(StoreRequest request, MultipartFile[] images, Long addedBy);
+    Product edit(Long id, UpdateRequest request, MultipartFile[] images, Long editedBy);
     Page<Product> paginate(Map<String, String[]> parameters);
     boolean delete (Long id);
 }

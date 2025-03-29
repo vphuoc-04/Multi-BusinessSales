@@ -7,8 +7,8 @@ import com.example.backend.modules.attributes.requests.AttributeValue.StoreReque
 import com.example.backend.modules.attributes.requests.AttributeValue.UpdateRequest;
 
 public interface AttributeValueServiceInterface {
-    AttributeValue create(StoreRequest request, Long addedBy);
-    AttributeValue update(Long id, UpdateRequest request, Long editedBy);
+    AttributeValue add(StoreRequest request, Long addedBy);
+    AttributeValue edit(Long id, UpdateRequest request, Long editedBy);
     List<AttributeValue> getAttributeValuesByAttributeId(Long attributeId);
     boolean delete(Long id);
 }

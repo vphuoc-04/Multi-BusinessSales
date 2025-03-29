@@ -1,20 +1,11 @@
 package com.example.backend.modules.products.services.impl;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.ProductBrand;
 import com.example.backend.modules.products.mappers.ProductBrandMapper;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
@@ -22,12 +13,15 @@ import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
 import com.example.backend.modules.products.requests.ProductBrand.UpdateRequest;
 import com.example.backend.modules.products.services.interfaces.ProductBrandServiceInterface;
 import com.example.backend.services.BaseService;
-import com.example.backend.specifications.BaseSpecification;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @Service
-public class ProductBrandService extends BaseService implements ProductBrandServiceInterface {
+public class ProductBrandService extends BaseService<
+    ProductBrand,
+    ProductBrandMapper,
+    StoreRequest,
+    UpdateRequest,
+    ProductBrandRepository
+>implements ProductBrandServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductBrandService.class);
     private final ProductBrandMapper productBrandMapper;
 
@@ -41,61 +35,29 @@ public class ProductBrandService extends BaseService implements ProductBrandServ
     }
 
     @Override
-    @Transactional
-    public ProductBrand create(StoreRequest request, Long addedBy) {
-        try {
-            ProductBrand payload = productBrandMapper.toCreate(request);
-            payload.setAddedBy(addedBy);
+    protected String[] getSearchFields() {
+        return new String[]{"name"};
+    }
 
-            return productBrandRepository.save(payload);
-        } catch (Exception e) {
-            throw new RuntimeException("Transaction failed: " + e.getMessage());
+    @Override
+    protected ProductBrandRepository getRepository() {
+        return productBrandRepository;
+    }
+
+    @Override 
+    protected ProductBrandMapper getMapper() {
+        return productBrandMapper;
+    }
+
+    @Override
+    protected void preSave(ProductBrand entity, Long addedBy, Long editedBy) {
+        if (addedBy != null) {
+            entity.setAddedBy(addedBy);
+            logger.info("Set addedBy: {}", addedBy);
         }
-    }
-
-    @Override
-    @Transactional
-    public ProductBrand update(Long id, UpdateRequest request, Long editedBy) {
-        ProductBrand productBrand = productBrandRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found"));
-        productBrandMapper.toUpdate(request, productBrand);
-        productBrand.setEditedBy(editedBy);
-
-        return productBrandRepository.save(productBrand);
-    }
-
-    @Override
-    public Page<ProductBrand> paginate(Map<String, String[]> parameters) {
-        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
-        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
-        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
-        Sort sort = createSort(sortParam);
-
-        String keyword = FilterParameter.filterKeyword(parameters);
-        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
-
-        logger.info("Keyword: " + keyword);
-        logger.info("Filter simple: {}", filterSimple );
-        logger.info("Filter complex: {}", filterComplex);
-
-        Specification<ProductBrand> specs = Specification.where(
-            BaseSpecification.<ProductBrand>keywordSpec(keyword, "name")
-        )
-        .and(BaseSpecification.<ProductBrand>whereSpec(filterSimple))
-        .and(BaseSpecification.<ProductBrand>complexWhereSpec(filterComplex));
-
-        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
-
-        return productBrandRepository.findAll(specs, pageable);
-    }
-
-    @Override
-    @Transactional
-    public boolean delete(Long id) {
-        ProductBrand productBrand = productBrandRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Not found"));
-
-        productBrandRepository.delete(productBrand);
-        return true;
+        if (editedBy != null) {
+            entity.setEditedBy(editedBy);
+            logger.info("Set editedBy: {}", editedBy);
+        }
     }
 }

@@ -1,21 +1,15 @@
 package com.example.backend.modules.users.services.impl;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.users.entities.User;
 import com.example.backend.modules.users.mappers.UserMapper;
 import com.example.backend.modules.users.repositories.UserRepository;
@@ -28,15 +22,15 @@ import com.example.backend.modules.users.services.interfaces.UserServiceInterfac
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseService;
 import com.example.backend.services.JwtService;
-import com.example.backend.specifications.BaseSpecification;
-
-import jakarta.persistence.EntityNotFoundException;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 @Service
-public class UserService extends BaseService implements UserServiceInterface {
+public class UserService extends BaseService<
+    User,
+    UserMapper,
+    StoreRequest,
+    UpdateRequest,
+    UserRepository
+> implements UserServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
@@ -76,66 +70,29 @@ public class UserService extends BaseService implements UserServiceInterface {
     }
 
     @Override
-    @Transactional
-    public User add(StoreRequest request, Long addedBy) {
-        try {
-            User payload = userMapper.toCreate(request);
-            payload.setAddedBy(addedBy);
+    protected String[] getSearchFields() {
+        return new String[]{"firstName", "middleName", "lastName", "email", "phone"};
+    }
 
-            return userRepository.save(payload);
-        } catch (Exception e) {
-            throw new RuntimeException("Transaction failed: " + e.getMessage());
+    @Override
+    protected UserRepository getRepository() {
+        return userRepository;
+    }
+
+    @Override
+    protected UserMapper getMapper() {
+        return userMapper;
+    }
+
+    @Override
+    protected void preSave(User entity, Long addedBy, Long editedBy) {
+        if (addedBy != null) {
+            entity.setAddedBy(addedBy);
+            logger.info("Set addedBy: {}", addedBy);
         }
-    }
-
-    @Override
-    public Page<User> paginate(Long catalogueId, Map<String, String[]> parameters) {
-        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
-        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
-        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
-        Sort sort = createSort(sortParam);
-
-        String keyword = FilterParameter.filterKeyword(parameters);
-        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters); 
-        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
-
-        logger.info("Keyword: " + keyword);
-        logger.info("Filter simple: {}", filterSimple);
-        logger.info("FIlter complex: {}", filterComplex);
-
-        Specification<User> specs = Specification.where(
-            BaseSpecification.<User>keywordSpec(keyword, "firstName")
-                .or(BaseSpecification.<User>keywordSpec(keyword, "middleName"))
-                .or(BaseSpecification.<User>keywordSpec(keyword, "lastName"))
-                .or(BaseSpecification.<User>keywordSpec(keyword, "phone"))
-                .or(BaseSpecification.<User>keywordSpec(keyword, "email"))
-        )
-        .and(BaseSpecification.<User>whereSpec(filterSimple))
-        .and(BaseSpecification.<User>complexWhereSpec(filterComplex))
-        .and((root, query, cb) -> cb.equal(root.get("catalogueId"), catalogueId));
-        
-        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
-
-        return userRepository.findAll(specs, pageable);
-    }
-
-    @Override
-    @Transactional
-    public User edit(Long id, UpdateRequest request, Long editedBy) {
-        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        userMapper.toUpdate(request, user);
-        user.setEditedBy(editedBy);
-        
-        return userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public boolean delete(Long id) {
-        User user = userRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        userRepository.delete(user);
-        return true;
+        if (editedBy != null) {
+            entity.setEditedBy(editedBy);
+            logger.info("Set editedBy: {}", editedBy);
+        }
     }
 }

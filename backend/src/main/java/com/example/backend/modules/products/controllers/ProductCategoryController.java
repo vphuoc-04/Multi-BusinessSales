@@ -55,7 +55,7 @@ public class ProductCategoryController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long createdBy = Long.valueOf(userId);
 
-            ProductCategory productCategory = productCategoryService.create(request, createdBy);
+            ProductCategory productCategory = productCategoryService.add(request, createdBy);
             ProductCategoryResource productCategoryResource = productCategoryMapper.toResource(productCategory);
             ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product catagory added successfulyy");
 
@@ -82,7 +82,7 @@ public class ProductCategoryController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long updatedBy = Long.valueOf(userId);
 
-            ProductCategory productCategory = productCategoryService.update(id, request, updatedBy);
+            ProductCategory productCategory = productCategoryService.edit(id, request, updatedBy);
             ProductCategoryResource productCategoryResource = productCategoryMapper.toResource(productCategory);
             ApiResource<ProductCategoryResource> response = ApiResource.ok(productCategoryResource, "Product category updated successfully");
 

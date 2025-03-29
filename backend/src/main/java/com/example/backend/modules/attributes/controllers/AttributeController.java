@@ -1,8 +1,6 @@
 package com.example.backend.modules.attributes.controllers;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,13 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.modules.attributes.entities.Attribute;
-import com.example.backend.modules.attributes.entities.AttributeValue;
 import com.example.backend.modules.attributes.mappers.AttributeMapper;
-import com.example.backend.modules.attributes.repositories.AttributeValueRepository;
+import com.example.backend.modules.attributes.mappers.AttributeValueMapper;
 import com.example.backend.modules.attributes.requests.Attribute.StoreRequest;
 import com.example.backend.modules.attributes.requests.Attribute.UpdateRequest;
 import com.example.backend.modules.attributes.resources.AttributeResource;
-import com.example.backend.modules.attributes.resources.AttributeValueResource;
 import com.example.backend.modules.attributes.services.interfaces.AttributeServiceInterface;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.JwtService;
@@ -41,13 +37,11 @@ public class AttributeController {
     private final AttributeMapper attributeMapper;
 
     @Autowired
-    private AttributeValueRepository attributeValueRepository;
-
-    @Autowired
     private JwtService jwtService;
 
     public AttributeController(
         AttributeServiceInterface attributeService,
+        AttributeValueMapper attributeValueMapper,
         AttributeMapper attributeMapper,
         JwtService jwtService
     ){
@@ -63,7 +57,7 @@ public class AttributeController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long addedBy = Long.valueOf(userId);
 
-            Attribute attribute = attributeService.create(request, addedBy);
+            Attribute attribute = attributeService.add(request, addedBy);
             AttributeResource attributeResource = attributeMapper.toResource(attribute);
             ApiResource<AttributeResource> response = ApiResource.ok(attributeResource, "Attribute added successfully");
 
@@ -80,7 +74,7 @@ public class AttributeController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long editedBy = Long.valueOf(userId);
 
-            Attribute attribute = attributeService.update(id, request, editedBy);
+            Attribute attribute = attributeService.edit(id, request, editedBy);
             AttributeResource attributeResource = attributeMapper.toResource(attribute);
             ApiResource<AttributeResource> response = ApiResource.ok(attributeResource, "Attribute edited successfully");
 
@@ -98,31 +92,11 @@ public class AttributeController {
 
     @GetMapping("/attribute")
     public ResponseEntity<?> getAll(HttpServletRequest request) {
-        List<AttributeValue> attributeValue = attributeValueRepository.findAll();
-
-        List<AttributeValueResource> attributeValueResources = attributeValue.stream()
-            .map(value -> AttributeValueResource.builder()
-                .value(value.getValue())
-                .addedBy(value.getAddedBy())
-                .editedBy(value.getEditedBy())
-                .build())
-            .collect(Collectors.toList());
-
         Map<String, String[]> parameters = request.getParameterMap();
         Page<Attribute> attributes = attributeService.paginate(parameters);
-
-        Page<AttributeResource> attributeResource = attributes.map(attribute ->
-            AttributeResource.builder()
-                .id(attribute.getId())
-                .name(attribute.getName())
-                .addedBy(attribute.getAddedBy())
-                .editedBy(attribute.getEditedBy())
-                .attributeValue(attributeValueResources)
-                .build()
-        );
-
+        Page<AttributeResource> attributeResource = attributeMapper.toPageResource(attributes);
         ApiResource<Page<AttributeResource>> response = ApiResource.ok(attributeResource, "Attribute fetch success");
-
+        
         return ResponseEntity.ok(response);
     }
 

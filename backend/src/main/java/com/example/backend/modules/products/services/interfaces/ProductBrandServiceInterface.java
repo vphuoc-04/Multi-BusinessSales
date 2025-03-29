@@ -9,8 +9,8 @@ import com.example.backend.modules.products.requests.ProductBrand.StoreRequest;
 import com.example.backend.modules.products.requests.ProductBrand.UpdateRequest;
 
 public interface ProductBrandServiceInterface {
-    ProductBrand create(StoreRequest request, Long addedBy);
-    ProductBrand update(Long id, UpdateRequest request, Long editedBy);
+    ProductBrand add(StoreRequest request, Long addedBy);
+    ProductBrand edit(Long id, UpdateRequest request, Long editedBy);
     Page<ProductBrand> paginate(Map<String, String[]> parameters);
     boolean delete(Long id);
 }

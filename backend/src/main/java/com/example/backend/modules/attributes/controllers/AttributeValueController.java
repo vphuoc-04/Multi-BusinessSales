@@ -20,7 +20,6 @@ import com.example.backend.modules.attributes.mappers.AttributeValueMapper;
 import com.example.backend.modules.attributes.repositories.AttributeRepository;
 import com.example.backend.modules.attributes.requests.AttributeValue.UpdateRequest;
 import com.example.backend.modules.attributes.requests.AttributeValue.StoreRequest;
-import com.example.backend.modules.attributes.resources.AttributeResource;
 import com.example.backend.modules.attributes.resources.AttributeValueResource;
 import com.example.backend.modules.attributes.services.interfaces.AttributeValueServiceInterface;
 import com.example.backend.resources.ApiResource;
@@ -56,7 +55,7 @@ public class AttributeValueController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long addedBy = Long.valueOf(userId);
 
-            AttributeValue attributeValue = attributeValueService.create(request, addedBy);
+            AttributeValue attributeValue = attributeValueService.add(request, addedBy);
             AttributeValueResource attributeValueResource = attributeValueMapper.toResource(attributeValue);
             ApiResource<AttributeValueResource> response = ApiResource.ok(attributeValueResource, "Attribute value added successfully");
 
@@ -73,7 +72,7 @@ public class AttributeValueController {
             String userId = jwtService.getUserIdFromJwt(token);
             Long editedBy = Long.valueOf(userId);
 
-            AttributeValue attributeValue = attributeValueService.update(id, request, editedBy);
+            AttributeValue attributeValue = attributeValueService.edit(id, request, editedBy);
             AttributeValueResource attributeValueResource = attributeValueMapper.toResource(attributeValue);
             ApiResource<AttributeValueResource> response = ApiResource.ok(attributeValueResource, "Attribute value updated successfully");
 
@@ -91,34 +90,11 @@ public class AttributeValueController {
 
     @GetMapping("/attribute_value/{attributeId}")
     public ResponseEntity<?> getAttributeValuesByAttributeId(@PathVariable Long attributeId) {
-        try {
-            List<AttributeValue> attributeValues = attributeValueService.getAttributeValuesByAttributeId(attributeId);
+        List<AttributeValue> attributeValues = attributeValueService.getAttributeValuesByAttributeId(attributeId);
+        List<AttributeValueResource> attributeValueResources = attributeValueMapper.toListResource(attributeValues);
+        ApiResource<List<AttributeValueResource>> response = ApiResource.ok(attributeValueResources, "List of attribute values by attributeId");
 
-            List<AttributeValueResource> attributeValueResources = attributeValues.stream()
-                .map(attributeValue -> {
-                    AttributeResource attributeResource = null;
-                    if (attributeValue.getAttribute() != null) {
-                        attributeResource = AttributeResource.builder()
-                            .id(attributeValue.getAttribute().getId())
-                            .name(attributeValue.getAttribute().getName())
-                            .build();
-                    }
-
-                    return AttributeValueResource.builder()
-                        .id(attributeValue.getId())
-                        .value(attributeValue.getValue())
-                        .addedBy(attributeValue.getAddedBy())
-                        .attribute(attributeResource)
-                        .build();
-                })
-                .toList();
-
-            ApiResource<List<AttributeValueResource>> response = ApiResource.ok(attributeValueResources, "List of attribute values by attributeId");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(ApiResource.message("NETWORK_ERROR", HttpStatus.UNAUTHORIZED));
-        }
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/attribute_value/{id}")

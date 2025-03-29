@@ -2,12 +2,15 @@ package com.example.backend.modules.attributes.services.impl;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.modules.attributes.entities.Attribute;
 import com.example.backend.modules.attributes.entities.AttributeValue;
+import com.example.backend.modules.attributes.mappers.AttributeValueMapper;
 import com.example.backend.modules.attributes.repositories.AttributeRepository;
 import com.example.backend.modules.attributes.repositories.AttributeValueRepository;
 import com.example.backend.modules.attributes.requests.AttributeValue.StoreRequest;
@@ -15,48 +18,42 @@ import com.example.backend.modules.attributes.requests.AttributeValue.UpdateRequ
 import com.example.backend.modules.attributes.services.interfaces.AttributeValueServiceInterface;
 import com.example.backend.services.BaseService;
 
-import jakarta.persistence.EntityNotFoundException;
-
 @Service
-public class AttributeValueService extends BaseService implements AttributeValueServiceInterface {
+public class AttributeValueService extends BaseService<
+    AttributeValue,
+    AttributeValueMapper,
+    StoreRequest,
+    UpdateRequest,
+    AttributeValueRepository
+> implements AttributeValueServiceInterface {
+    private static final Logger logger = LoggerFactory.getLogger(AttributeValueService.class);
+    private final AttributeValueMapper attributeValueMapper;
+    private final AttributeRepository attributeRepository; 
+
     @Autowired
     private AttributeValueRepository attributeValueRepository;
 
-    @Autowired
-    private AttributeRepository attributeRepository;
-
-    @Override
-    @Transactional
-    public AttributeValue create(StoreRequest request, Long addedBy) {
-        try {
-            Attribute attribute = attributeRepository.findById(request.getAttributeId())
-                .orElseThrow(() -> new EntityNotFoundException("Attribute not found"));
-
-            AttributeValue payload = AttributeValue.builder()
-                .value(request.getValue())
-                .attribute(attribute)
-                .addedBy(addedBy)
-                .build();
-            
-            return attributeValueRepository.save(payload);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Transactional failed: " + e.getMessage());
-        }
+    public AttributeValueService(
+        AttributeValueMapper attributeValueMapper,
+        AttributeRepository attributeRepository 
+    ){
+        this.attributeValueMapper = attributeValueMapper;
+        this.attributeRepository = attributeRepository;
     }
 
     @Override
-    @Transactional
-    public AttributeValue update(Long id, UpdateRequest request, Long editedBy) {
-        AttributeValue attributeValue = attributeValueRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Attribute value not found"));
+    protected String[] getSearchFields() {
+        return new String[]{"value"};
+    }
 
-        AttributeValue payload = attributeValue.toBuilder()
-            .value(request.getValue())
-            .editedBy(editedBy)
-            .build();
+    @Override
+    protected AttributeValueRepository getRepository() {
+        return attributeValueRepository;
+    }
 
-        return attributeValueRepository.save(payload);
+    @Override 
+    protected AttributeValueMapper getMapper() {
+        return attributeValueMapper;
     }
 
     @Override
@@ -65,13 +62,31 @@ public class AttributeValueService extends BaseService implements AttributeValue
     }
 
     @Override
-    @Transactional
-    public boolean delete(Long id) {
-        AttributeValue attributeValue = attributeValueRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Attribute not found"));
+    protected Long getRelationIdFromCreate(StoreRequest request) {
+        return request.getAttributeId(); 
+    }
 
-            attributeValueRepository.delete(attributeValue);
+    @Override
+    protected Long getRelationIdFromUpdate(UpdateRequest request) {
+        return request.getAttributeId(); 
+    }
 
-        return true;
+    @Override
+    protected void setRelation(AttributeValue entity, Long relationId) {
+        Attribute attribute = attributeRepository.findById(relationId)
+            .orElseThrow(() -> new IllegalArgumentException("Attribute with ID " + relationId + " not found"));
+        entity.setAttribute(attribute); 
+    }
+
+    @Override
+    protected void preSave(AttributeValue entity, Long addedBy, Long editedBy) {
+        if (addedBy != null) {
+            entity.setAddedBy(addedBy);
+            logger.info("Set addedBy of attribute value: {}", addedBy);
+        }
+        if (editedBy != null) {
+            entity.setEditedBy(editedBy);
+            logger.info("Set editedBy of attribute value: {}", editedBy);
+        }
     }
 }

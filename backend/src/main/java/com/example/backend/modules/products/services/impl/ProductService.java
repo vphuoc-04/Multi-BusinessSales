@@ -6,188 +6,122 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.backend.helpers.FilterParameter;
 import com.example.backend.modules.products.entities.Product;
 import com.example.backend.modules.products.entities.ProductBrand;
 import com.example.backend.modules.products.entities.ProductImage;
 import com.example.backend.modules.products.mappers.ProductMapper;
-import com.example.backend.modules.products.repositories.ProductRepository;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
-import com.example.backend.modules.products.repositories.ProductImageRepository;
+import com.example.backend.modules.products.repositories.ProductRepository;
 import com.example.backend.modules.products.requests.Product.StoreRequest;
 import com.example.backend.modules.products.requests.Product.UpdateRequest;
 import com.example.backend.modules.products.services.interfaces.ProductServiceInterface;
 import com.example.backend.services.BaseService;
-import com.example.backend.specifications.BaseSpecification;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @Service
-public class ProductService extends BaseService implements ProductServiceInterface {
+public class ProductService extends BaseService<
+    Product,
+    ProductMapper,
+    StoreRequest,
+    UpdateRequest,
+    ProductRepository
+> implements ProductServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
+
     private final ProductMapper productMapper;
+    private final String uploadDir = "../frontend/assets/uploads/";
 
     @Autowired
     private ProductRepository productRepository;
-    
-    @Autowired
-    private ProductImageRepository productImageRepository;
 
     @Autowired
     private ProductBrandRepository productBrandRepository;
 
-    public ProductService(
-        ProductMapper productMapper
-    ){
+    public ProductService(ProductMapper productMapper) {
         this.productMapper = productMapper;
     }
 
     @Override
+    protected String[] getSearchFields() {
+        return new String[]{"name"};
+    }
+
+    @Override
+    protected ProductRepository getRepository() {
+        return productRepository;
+    }
+
+    @Override
+    protected ProductMapper getMapper() {
+        return productMapper;
+    }
+
+    @Override
+    protected void preSave(Product entity, Long addedBy, Long editedBy) {
+        if (addedBy != null) {
+            entity.setAddedBy(addedBy);
+            logger.info("Set addedBy: {}", addedBy);
+        }
+        if (editedBy != null) {
+            entity.setEditedBy(editedBy);
+            logger.info("Set editedBy: {}", editedBy);
+        }
+    }
+
+    @Override
     @Transactional
-    public Product create(StoreRequest request, MultipartFile[] images, Long addedBy) {
+    public Product add(StoreRequest request, MultipartFile[] images, Long addedBy) {
+        Product product = super.add(request, addedBy); 
+        return updateProductWithBrandAndImages(product, request.getBrandId(), images, addedBy);
+    }
+
+    @Override
+    @Transactional
+    public Product edit(Long id, UpdateRequest request, MultipartFile[] images, Long editedBy) {
+        Product product = super.edit(id, request, editedBy); 
+        return updateProductWithBrandAndImages(product, request.getBrandId(), images, editedBy);
+    }
+
+    private Product updateProductWithBrandAndImages(Product product, Long brandId, MultipartFile[] images, Long userId) {
         try {
-            ProductBrand brand = null;
-            if (request.getBrandId() != null) {
-                brand = productBrandRepository.findById(request.getBrandId())
+            if (brandId != null) {
+                ProductBrand brand = productBrandRepository.findById(brandId)
                     .orElseThrow(() -> new RuntimeException("Brand not found"));
+                product.setBrand(brand);
             }
 
-            Product payload = productMapper.toCreate(request);
-            payload.setAddedBy(addedBy);
-            payload.setBrand(brand);
-
-            Product product = productRepository.save(payload);
-
             if (images != null && images.length > 0) {
-                List<ProductImage> imageList = new ArrayList<>();
-                String uploadDir = "../frontend/assets/uploads/";
+                List<ProductImage> imageList = product.getImages() != null ? product.getImages() : new ArrayList<>();
+                imageList.clear(); 
 
                 for (MultipartFile image : images) {
-                    String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+                    String filename = UUID.randomUUID() + "_" + image.getOriginalFilename();
                     Path filePath = Paths.get(uploadDir + filename);
-
                     Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
                     ProductImage productImage = ProductImage.builder()
-                            .imageUrl("/assets/uploads/" + filename)
-                            .product(product)
-                            .addedBy(addedBy)
-                            .build();
+                        .imageUrl("/assets/uploads/" + filename)
+                        .product(product)
+                        .addedBy(userId)
+                        .build();
                     imageList.add(productImage);
                 }
 
-                productImageRepository.saveAll(imageList);
                 product.setImages(imageList);
+                productRepository.save(product); 
             }
 
             return product;
         } catch (Exception e) {
-            throw new RuntimeException("Transaction failed: " + e.getMessage());
+            throw new RuntimeException("Failed to update product with brand/images: " + e.getMessage());
         }
     }
-
-    @Override
-    @Transactional
-    public Product update(Long id, UpdateRequest request, MultipartFile[] images, Long editedBy) {
-        try {
-            Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-    
-            ProductBrand brand = null;
-            if (request.getBrandId() != null) {
-                brand = productBrandRepository.findById(request.getBrandId())
-                    .orElseThrow(() -> new RuntimeException("Brand not found"));
-            }
-    
-            productMapper.toUpdate(request, product);
-            product.setBrand(brand);
-            product.setEditedBy(editedBy);
-    
-            if (images != null && images.length > 0) {
-                if (product.getImages() != null) {
-                    product.getImages().clear();
-                } else {
-                    product.setImages(new ArrayList<>());
-                }
-    
-                String uploadDir = "../frontend/assets/uploads/";
-                for (MultipartFile image : images) {
-                    String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-                    Path filePath = Paths.get(uploadDir + filename);
-    
-                    Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    
-                    ProductImage productImage = ProductImage.builder()
-                            .imageUrl("/assets/uploads/" + filename)
-                            .product(product)
-                            .addedBy(editedBy)
-                            .build();
-                    product.getImages().add(productImage);
-                }
-            }
-            Product updatedProduct = productRepository.save(product);
-            logger.info("Images after update, size: {}", 
-                updatedProduct.getImages() != null ? updatedProduct.getImages().size() : 0);
-            if (updatedProduct.getImages() != null) {
-                updatedProduct.getImages().forEach(img -> 
-                    logger.info("Image URL: {}", img.getImageUrl()));
-            }
-
-            return updatedProduct;
-        } catch (Exception e) {
-            throw new RuntimeException("Update transaction failed: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Page<Product> paginate(Map<String, String[]> parameters) {
-        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
-        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
-        String sortParam = parameters.containsKey("sort") ? parameters.get("sort")[0] : null;
-        Sort sort = createSort(sortParam);
-
-        String keyword = FilterParameter.filterKeyword(parameters);
-        Map<String, String> filterSimple = FilterParameter.filterSimple(parameters);
-        Map<String, Map<String, String>> filterComplex = FilterParameter.filterComplex(parameters);
-
-        logger.info("Keyword: " + keyword);
-        logger.info("Filter simple: {}", filterSimple );
-        logger.info("Filter complex: {}", filterComplex);
-
-        Specification<Product> specs = Specification.where(
-            BaseSpecification.<Product>keywordSpec(keyword, "name")
-        )
-        .and(BaseSpecification.<Product>whereSpec(filterSimple))
-        .and(BaseSpecification.<Product>complexWhereSpec(filterComplex));
-
-        Pageable pageable = PageRequest.of(page - 1, perpage, sort);
-
-        return productRepository.findAll(specs, pageable);
-    }
-
-    @Override
-    @Transactional
-    public boolean delete(Long id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Not found"));
-
-        productRepository.delete(product);
-        return true;
-    } 
 }

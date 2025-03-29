@@ -59,8 +59,8 @@ public class Product {
     private ProductBrand brand;
     
     // Quan hệ N-N thông qua bảng trung gian: Product - Supplier
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductSupplier> productSuppliers;
+    // @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<ProductSupplier> productSuppliers;
     
     // Quan hệ N-N thông qua bảng trung gian: Product - Discount
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
