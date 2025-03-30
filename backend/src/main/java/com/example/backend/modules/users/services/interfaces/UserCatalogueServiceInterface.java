@@ -1,16 +1,10 @@
 package com.example.backend.modules.users.services.interfaces;
 
-import java.util.Map;
-
-import org.springframework.data.domain.Page;
-
 import com.example.backend.modules.users.entities.UserCatalogue;
 import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
 import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
+import com.example.backend.services.BaseServiceInterface;
 
-public interface UserCatalogueServiceInterface {
-    UserCatalogue add(StoreRequest request, Long addedBy);
-    UserCatalogue edit(Long id, UpdateRequest request, Long editedBy);
-    Page<UserCatalogue> paginate(Map<String, String[]> parameters);
-    boolean delete(Long id);
+public interface UserCatalogueServiceInterface extends BaseServiceInterface<UserCatalogue, StoreRequest, UpdateRequest> {
+
 }

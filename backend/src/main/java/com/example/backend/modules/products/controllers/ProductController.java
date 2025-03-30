@@ -1,13 +1,6 @@
 package com.example.backend.modules.products.controllers;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,118 +10,88 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.backend.controllers.BaseController;
 import com.example.backend.modules.products.entities.Product;
 import com.example.backend.modules.products.mappers.ProductMapper;
+import com.example.backend.modules.products.repositories.ProductRepository;
 import com.example.backend.modules.products.requests.Product.StoreRequest;
 import com.example.backend.modules.products.requests.Product.UpdateRequest;
 import com.example.backend.modules.products.resources.ProductResource;
 import com.example.backend.modules.products.services.interfaces.ProductServiceInterface;
-import com.example.backend.resources.ApiResource;
-import com.example.backend.services.JwtService;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("api/v1")
-public class ProductController {
+@RequestMapping("api/v1/product")
+public class ProductController extends BaseController<
+    Product,
+    ProductResource,
+    StoreRequest,
+    UpdateRequest,
+    ProductRepository
+> {
     private final ProductServiceInterface productService;
-    private final ProductMapper productMapper;
-
-    @Autowired
-    private JwtService jwtService;
 
     public ProductController(
-        ProductServiceInterface productService,
-        ProductMapper productMapper,
-        JwtService jwtService
+        ProductServiceInterface service,
+        ProductMapper mapper,
+        ProductRepository repository
     ){
-        this.productService = productService;
-        this.productMapper = productMapper;
-        this.jwtService = jwtService;
+        super(service, mapper, repository);
+        this.productService = service;
     }
 
-    @PostMapping("/product")
-    public ResponseEntity<?> store(
-            @ModelAttribute StoreRequest request, 
-            @RequestParam(value = "images", required = false) MultipartFile[] images, 
-            @RequestHeader("Authorization") String bearerToken) {
-        try {
-            String token = bearerToken.substring(7);
-            String userId = jwtService.getUserIdFromJwt(token);
-            Long addedBy = Long.valueOf(userId);
-
-            Product product = productService.add(request, images, addedBy);
-            ProductResource productResource = productMapper.toResource(product);
-
-            return ResponseEntity.ok(ApiResource.ok(productResource, "Product created successfully"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(ApiResource.message(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
-        }
+    @Override
+    protected Product addWithFiles(StoreRequest request, MultipartFile[] files, Long userId) {
+        return productService.add(request, files, userId);
     }
 
-    @PutMapping("/product/{id}")
-    public ResponseEntity<?> update(
-        @PathVariable Long id,
-        @ModelAttribute UpdateRequest request,
+    @Override
+    protected Product editWithFiles(Long id, UpdateRequest request, MultipartFile[] files, Long userId) {
+        return productService.edit(id, request, files, userId);
+    }
+
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<?> storeWithFiles(
+        @Valid StoreRequest request,
         @RequestParam(value = "images", required = false) MultipartFile[] images,
-        @RequestHeader("Authorization") String bearerToken) {
-    
-        try {
-            String token = bearerToken.substring(7);
-            String userId = jwtService.getUserIdFromJwt(token);
-            Long editedBy = Long.valueOf(userId);
-    
-            Product product = productService.edit(id, request, images, editedBy);
-            ProductResource productResource = productMapper.toResource(product);
-            ApiResource<ProductResource> response = ApiResource.ok(productResource, "Product updated successfully");
-
-            return ResponseEntity.ok(response);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ApiResource.message(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)
-            );
-        }
-    }    
-
-    @GetMapping("/product")
-    public ResponseEntity<?> index(HttpServletRequest request) {
-        Map<String, String[]> parameters = request.getParameterMap();
-        Page<Product> products = productService.paginate(parameters);
-        Page<ProductResource> productResource = productMapper.toPageResource(products);
-        ApiResource<Page<ProductResource>> response = ApiResource.ok(productResource, "Fetch product data successfully");
-        return ResponseEntity.ok(response);
+        @RequestHeader("Authorization") String bearerToken
+    ){
+        return super.storeWithFiles(request, images, bearerToken);
     }
 
-    @DeleteMapping("/product/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            boolean deleted = productService.delete(id);
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<?> updateWithFiles(
+        @PathVariable Long id,
+        @Valid UpdateRequest request,
+        @RequestParam(value = "images", required = false) MultipartFile[] images,
+        @RequestHeader("Authorization") String bearerToken
+    ){
+        return super.updateWithFiles(id, request, images, bearerToken);
+    }
 
-            if (deleted) {
-                return ResponseEntity.ok(
-                    ApiResource.message("Product deleted successfully", HttpStatus.OK)
-                );
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ApiResource.error("NOT_FOUND", "Error", HttpStatus.NOT_FOUND)
-                );
-            }
+    @Override
+    protected String getStoreSuccessMessage() {
+        return "Product created successfully";
+    }
 
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ApiResource.error("NOT_FOUND", e.getMessage(), HttpStatus.NOT_FOUND)
-            );
+    @Override
+    protected String getUpdateSuccessMessage() {
+        return "Product updated successfully";
+    }
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ApiResource.error("INTERNAL_SERVER_ERROR", "Error", HttpStatus.INTERNAL_SERVER_ERROR)
-            );
-        }   
+    @Override
+    protected String getFetchSuccessMessage() {
+        return "Fetch product data successfully";
+    }
+
+    @Override
+    protected String getDeleteSuccessMessage() {
+        return "Product deleted successfully";
+    }
+
+    @Override
+    protected String getEntityName() {
+        return "Product";
     }
 }
