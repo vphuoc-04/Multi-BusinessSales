@@ -1,5 +1,6 @@
 package com.example.backend.controllers;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.backend.annotations.RequirePermission;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.mappers.BaseMapper;
 import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseServiceInterface;
@@ -37,6 +40,7 @@ public abstract class BaseController<
     protected final BaseServiceInterface<Entity, Create, Update> service;
     protected final BaseMapper<Entity, Resource, Create, Update> mapper;
     protected final Repository repository;
+    public final PermissionEnum permissionEnum;
 
     @Autowired
     private JwtService jwtService;
@@ -44,14 +48,21 @@ public abstract class BaseController<
     public BaseController(
         BaseServiceInterface<Entity, Create, Update> service,
         BaseMapper<Entity, Resource, Create, Update> mapper,
-        Repository repository
+        Repository repository,
+        PermissionEnum permissionEnum
     ){
         this.service = service;
         this.mapper = mapper;
         this.repository = repository;
+        this.permissionEnum = permissionEnum;
+    }
+
+    public PermissionEnum getPermissionEnum() {
+        return permissionEnum;
     }
 
     @PostMapping
+    @RequirePermission(action = "store")
     public ResponseEntity<?> store(@Valid @RequestBody Create request, @RequestHeader("Authorization") String bearerToken) {
         try {
             Long userId = extractUserIdFromToken(bearerToken);
@@ -66,6 +77,7 @@ public abstract class BaseController<
     }
 
     @PutMapping("/{id}")
+    @RequirePermission(action = "update")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Update request, @RequestHeader("Authorization") String bearerToken) {
         try {
             Long userId = extractUserIdFromToken(bearerToken);
@@ -83,6 +95,7 @@ public abstract class BaseController<
     }
 
     @PostMapping(consumes = "multipart/form-data")
+    @RequirePermission(action = "store_with_files")
     public ResponseEntity<?> storeWithFiles(
         @Valid Create request,
         @RequestParam(value = "files", required = false) MultipartFile[] files,
@@ -102,6 +115,7 @@ public abstract class BaseController<
     }
 
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    @RequirePermission(action = "update_with_files")
     public ResponseEntity<?> updateWithFiles(
         @PathVariable Long id,
         @Valid Update request,
@@ -124,7 +138,25 @@ public abstract class BaseController<
         }
     }
 
+    @GetMapping("/list")
+    @RequirePermission(action = "get_with_list")
+    public ResponseEntity<?> list(HttpServletRequest request) {
+        try {
+            Map<String, String[]> parameters = request.getParameterMap();
+            List<Entity> entities = service.getAll(parameters);
+            List<Resource> resources = mapper.toListResource(entities);
+            ApiResource<List<Resource>> response = ApiResource.ok(resources, getFetchSuccessMessage());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResource.error("INTERNAL_SERVER_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
     @GetMapping
+    @RequirePermission(action = "get_with_page")
     public ResponseEntity<?> getAll(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
         Page<Entity> entities = service.paginate(parameters);
@@ -134,6 +166,7 @@ public abstract class BaseController<
     }
 
     @GetMapping("/{id}")
+    @RequirePermission(action = "get_with_id")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             Entity entity = repository.findById(id)
@@ -151,6 +184,7 @@ public abstract class BaseController<
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(action = "delete")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             boolean deleted = service.delete(id);

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.attributes.entities.AttributeValue;
 import com.example.backend.modules.attributes.mappers.AttributeValueMapper;
 import com.example.backend.modules.attributes.repositories.AttributeValueRepository;
@@ -36,7 +37,7 @@ public class AttributeValueController extends BaseController<
         AttributeValueMapper mapper,
         AttributeValueRepository repository
     ) {
-        super(service, mapper, repository);
+        super(service, mapper, repository, PermissionEnum.ATTRIBUTE_VALUE);
         this.attributeValueService = service;
         this.attributeValueMapper = mapper;
     }

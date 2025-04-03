@@ -75,6 +75,11 @@ public class UserService extends BaseService<
     }
 
     @Override
+    protected String[] getRelations(){
+        return new String[]{"userCatalogues"};
+    }
+
+    @Override
     protected UserRepository getRepository() {
         return userRepository;
     }

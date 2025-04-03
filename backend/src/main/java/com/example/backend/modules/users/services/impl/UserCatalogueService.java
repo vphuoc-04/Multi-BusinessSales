@@ -40,6 +40,11 @@ public class UserCatalogueService extends BaseService<
     }
 
     @Override
+    protected String[] getRelations() {
+        return new String[]{"permissions"};
+    }
+
+    @Override
     protected UserCatalogueRepository getRepository(){
         return userCataloguesRepository;
     }

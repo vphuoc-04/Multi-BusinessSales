@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.products.entities.ProductBrand;
 import com.example.backend.modules.products.mappers.ProductBrandMapper;
 import com.example.backend.modules.products.repositories.ProductBrandRepository;
@@ -26,7 +27,7 @@ public class ProductBrandController extends BaseController<
         ProductBrandMapper productBrandMapper,
         ProductBrandRepository productBrandRepository
     ){
-        super(productBrandService, productBrandMapper, productBrandRepository);
+        super(productBrandService, productBrandMapper, productBrandRepository, PermissionEnum.PRODUCT_BRAND);
     }
 
     @Override

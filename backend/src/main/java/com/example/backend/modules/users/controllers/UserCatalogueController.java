@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.users.entities.UserCatalogue;
 import com.example.backend.modules.users.mappers.UserCatalogueMapper;
 import com.example.backend.modules.users.repositories.UserCatalogueRepository;
@@ -13,7 +14,7 @@ import com.example.backend.modules.users.resources.UserCatalogueResource;
 import com.example.backend.modules.users.services.interfaces.UserCatalogueServiceInterface;
 
 @RestController
-@RequestMapping("api/v1")
+@RequestMapping("api/v1/user_catalogue")
 public class UserCatalogueController extends BaseController<
     UserCatalogue,
     UserCatalogueResource,
@@ -27,7 +28,7 @@ public class UserCatalogueController extends BaseController<
         UserCatalogueMapper userCatalogueMapper,
         UserCatalogueRepository userCatalogueRepository
     ){
-        super(userCatagoluesService, userCatalogueMapper, userCatalogueRepository);
+        super(userCatagoluesService, userCatalogueMapper, userCatalogueRepository, PermissionEnum.USER_CATALOGUE);
     }
 
     @Override

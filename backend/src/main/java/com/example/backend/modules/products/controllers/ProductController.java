@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.products.entities.Product;
 import com.example.backend.modules.products.mappers.ProductMapper;
 import com.example.backend.modules.products.repositories.ProductRepository;
@@ -37,7 +38,7 @@ public class ProductController extends BaseController<
         ProductMapper mapper,
         ProductRepository repository
     ){
-        super(service, mapper, repository);
+        super(service, mapper, repository, PermissionEnum.PRODUCT);
         this.productService = service;
     }
 

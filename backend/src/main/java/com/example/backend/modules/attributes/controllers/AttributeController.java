@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.attributes.entities.Attribute;
 import com.example.backend.modules.attributes.mappers.AttributeMapper;
 import com.example.backend.modules.attributes.repositories.AttributeRepository;
@@ -26,7 +27,7 @@ public class AttributeController extends BaseController<
         AttributeMapper attributeMapper,
         AttributeRepository attributeRepository
     ){
-        super(attributeService, attributeMapper, attributeRepository);
+        super(attributeService, attributeMapper, attributeRepository, PermissionEnum.ATTRIBUTE);
     }
 
     @Override

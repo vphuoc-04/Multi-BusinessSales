@@ -1,10 +1,15 @@
 package com.example.backend.services;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +24,8 @@ import com.example.backend.helpers.FilterParameter;
 import com.example.backend.mappers.BaseMapper;
 import com.example.backend.specifications.BaseSpecification;
 
+import org.springframework.context.ApplicationContext;
+
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -31,7 +38,11 @@ public abstract class BaseService <
 > {
     private static final Logger logger = LoggerFactory.getLogger(BaseService.class);
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     protected abstract String[] getSearchFields();
+    protected String[] getRelations() { return new String[0]; }
     protected abstract Repository getRepository();
     protected abstract Mapper getMapper();
     protected Long getRelationIdFromCreate(Create request) { return null; }
@@ -43,14 +54,13 @@ public abstract class BaseService <
     public Entity add(Create request, Long addedBy) {
         logger.info("Creating with addedBy: {}", addedBy);
         Entity payload = getMapper().toCreate(request);
+        Entity entity = getRepository().save(payload);
 
         Long relationId = getRelationIdFromCreate(request);
-        if (relationId != null) {
-            setRelation(payload, relationId);
-        }
-
+        if (relationId != null) { setRelation(payload, relationId); }
+        handleManyToManyRelations(entity, request);
         preSave(payload, addedBy, null); 
-        return getRepository().save(payload);
+        return entity;
     }
 
     @Transactional
@@ -58,14 +68,13 @@ public abstract class BaseService <
         Entity entity = getRepository().findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Not found"));
         getMapper().toUpdate(request, entity);
+        Entity update = getRepository().save(entity);
 
         Long relationId = getRelationIdFromUpdate(request);
-        if (relationId != null) {
-            setRelation(entity, relationId);
-        }
-
+        if (relationId != null) { setRelation(entity, relationId); }
+        handleManyToManyRelations(entity, request);
         preSave(entity, null, editedBy);
-        return getRepository().save(entity);
+        return update;
     }
 
     @Transactional
@@ -74,6 +83,12 @@ public abstract class BaseService <
             .orElseThrow(() -> new EntityNotFoundException("Not found"));
         getRepository().delete(entity);
         return true;
+    }
+
+    public List<Entity> getAll(Map<String, String[]> parameters) {
+        Sort sort = parseSort(parameters);
+        Specification<Entity> specs = buildSpecification(parameters, getSearchFields());
+        return getRepository().findAll(specs, sort);
     }
 
     public Page<Entity> paginate(Map<String, String[]> parameters) {
@@ -110,6 +125,37 @@ public abstract class BaseService <
         .and(BaseSpecification.<Entity>complexWhereSpec(filterComplex));
 
         return specs;
+    }
+
+    private void handleManyToManyRelations(Entity entity, Object request) {
+        String[] relations = getRelations();
+        if (relations != null && relations.length > 0) {
+            for(String relation: relations){
+                try {
+                    Field requestField = request.getClass().getDeclaredField(relation);
+                    requestField.setAccessible(true);
+                    @SuppressWarnings("unchecked")
+                    List<Long> ids = (List<Long>) requestField.get(request);
+                    if(ids != null && !ids.isEmpty()){
+                        Field entityField = entity.getClass().getDeclaredField(relation);
+                        entityField.setAccessible(true);
+                        ParameterizedType setType = (ParameterizedType) entityField.getGenericType();
+                        Class<?> entityClass = (Class<?>) setType.getActualTypeArguments()[0];
+                        String repositoryName = entityClass.getSimpleName() + "Repository";
+                        repositoryName = Character.toLowerCase(repositoryName.charAt(0)) + repositoryName.substring(1);
+                        
+                        @SuppressWarnings("unchecked")
+                        JpaRepository<Entity, Long> repository = (JpaRepository<Entity, Long>) applicationContext.getBean(repositoryName);
+                        List<Entity> entities = repository.findAllById(ids);
+                        Set<Entity> entitySet = new HashSet<>(entities);
+                        entityField.set(entity, entitySet);
+                    }
+                    
+                }catch ( NoSuchFieldException | ClassCastException | IllegalAccessException  e) {
+                    throw new RuntimeException("An error occurred while processing the relationship: " + relation + " " + e.getMessage(), e);
+                }
+            }
+        }
     }
 
     protected Sort createSort(String sortParam) {

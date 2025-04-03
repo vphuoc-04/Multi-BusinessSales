@@ -1,7 +1,8 @@
 package com.example.backend.modules.users.requests.User;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -9,10 +10,6 @@ import lombok.Data;
 
 @Data
 public class StoreRequest {
-    @NotNull(message = "Catalogue ID is required")
-    @Min(value = 1, message = "Catalogue ID must be greater than 0")
-    private Long catalogueId;
-
     @NotBlank(message = "First name cannot be empty")
     private String firstName;
 
@@ -31,4 +28,7 @@ public class StoreRequest {
 
     @NotBlank(message = "Password name cannot be empty")
     private String password;
+
+    @NotNull(message = "No permissions granted to member")
+    private List<Long> userCatalogues;
 }

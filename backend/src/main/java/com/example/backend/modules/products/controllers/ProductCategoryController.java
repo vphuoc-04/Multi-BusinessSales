@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.controllers.BaseController;
+import com.example.backend.enums.PermissionEnum;
 import com.example.backend.modules.products.entities.ProductCategory;
 import com.example.backend.modules.products.mappers.ProductCategoryMapper;
 import com.example.backend.modules.products.repositories.ProductCategoryRepository;
@@ -26,7 +27,7 @@ public class ProductCategoryController extends BaseController<
         ProductCategoryMapper productCategoryMapper,
         ProductCategoryRepository productCategoryRepository
     ){
-        super(productCategoryService, productCategoryMapper, productCategoryRepository);
+        super(productCategoryService, productCategoryMapper, productCategoryRepository, PermissionEnum.PRODUCT_CATEGORY);
     }
 
     @Override
