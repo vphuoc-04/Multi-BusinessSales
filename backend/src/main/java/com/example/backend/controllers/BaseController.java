@@ -206,7 +206,7 @@ public abstract class BaseController<
     protected long extractUserIdFromToken(String bearerToken) {
         String token = bearerToken.substring(7);
         String userId = jwtService.getUserIdFromJwt(token);
-        return Long.valueOf(userId);
+        return Long.parseLong(userId);
     }
 
     protected Create preStore(Create request) { return request; }
