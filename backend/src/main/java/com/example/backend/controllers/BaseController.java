@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.backend.annotations.RequirePermission;
 import com.example.backend.enums.PermissionEnum;
 import com.example.backend.mappers.BaseMapper;
 import com.example.backend.resources.ApiResource;
@@ -62,7 +61,7 @@ public abstract class BaseController<
     }
 
     @PostMapping
-    @RequirePermission(action = "store")
+    // @RequirePermission(action = "store")
     public ResponseEntity<?> store(@Valid @RequestBody Create request, @RequestHeader("Authorization") String bearerToken) {
         try {
             Long userId = extractUserIdFromToken(bearerToken);
@@ -77,7 +76,7 @@ public abstract class BaseController<
     }
 
     @PutMapping("/{id}")
-    @RequirePermission(action = "update")
+    // @RequirePermission(action = "update")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Update request, @RequestHeader("Authorization") String bearerToken) {
         try {
             Long userId = extractUserIdFromToken(bearerToken);
@@ -95,7 +94,7 @@ public abstract class BaseController<
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    @RequirePermission(action = "store_with_files")
+    // @RequirePermission(action = "store_with_files")
     public ResponseEntity<?> storeWithFiles(
         @Valid Create request,
         @RequestParam(value = "files", required = false) MultipartFile[] files,
@@ -115,7 +114,7 @@ public abstract class BaseController<
     }
 
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    @RequirePermission(action = "update_with_files")
+    // @RequirePermission(action = "update_with_files")
     public ResponseEntity<?> updateWithFiles(
         @PathVariable Long id,
         @Valid Update request,
@@ -139,11 +138,11 @@ public abstract class BaseController<
     }
 
     @GetMapping("/list")
-    @RequirePermission(action = "get_with_list")
+    // @RequirePermission(action = "get_with_list")
     public ResponseEntity<?> list(HttpServletRequest request) {
         try {
             Map<String, String[]> parameters = request.getParameterMap();
-            List<Entity> entities = service.getAll(parameters);
+            List<Entity> entities = service.getAll(parameters, request);
             List<Resource> resources = mapper.toListResource(entities);
             ApiResource<List<Resource>> response = ApiResource.ok(resources, getFetchSuccessMessage());
 
@@ -156,17 +155,17 @@ public abstract class BaseController<
     }
 
     @GetMapping
-    @RequirePermission(action = "get_with_page")
+    // @RequirePermission(action = "get_with_page")
     public ResponseEntity<?> getAll(HttpServletRequest request) {
         Map<String, String[]> parameters = request.getParameterMap();
-        Page<Entity> entities = service.paginate(parameters);
+        Page<Entity> entities = service.paginate(parameters, request);
         Page<Resource> resources = mapper.toPageResource(entities);
         ApiResource<Page<Resource>> response = ApiResource.ok(resources, getFetchSuccessMessage());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    @RequirePermission(action = "get_with_id")
+    // @RequirePermission(action = "get_with_id")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             Entity entity = repository.findById(id)
@@ -184,7 +183,7 @@ public abstract class BaseController<
     }
 
     @DeleteMapping("/{id}")
-    @RequirePermission(action = "delete")
+    // @RequirePermission(action = "delete")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             boolean deleted = service.delete(id);

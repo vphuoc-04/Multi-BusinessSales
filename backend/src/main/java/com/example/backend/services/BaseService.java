@@ -2,6 +2,7 @@ package com.example.backend.services;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +26,8 @@ import com.example.backend.helpers.FilterParameter;
 import com.example.backend.mappers.BaseMapper;
 import com.example.backend.specifications.BaseSpecification;
 
-import org.springframework.context.ApplicationContext;
-
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public abstract class BaseService <
@@ -85,17 +86,33 @@ public abstract class BaseService <
         return true;
     }
 
-    public List<Entity> getAll(Map<String, String[]> parameters) {
-        Sort sort = parseSort(parameters);
-        Specification<Entity> specs = buildSpecification(parameters, getSearchFields());
+    private Map<String, String[]> modifiedParameters(HttpServletRequest request, Map<String, String[]> parameters){
+
+        Map<String, String[]> modifedParameters = new HashMap<>(parameters);
+
+        Object userIdAttribute = request.getAttribute("userId");
+        if(userIdAttribute != null){
+            String userId = userIdAttribute.toString();
+            modifedParameters.put("userId", new String[]{userId});
+        }
+
+        return modifedParameters;
+    }
+
+    public List<Entity> getAll(Map<String, String[]> parameters, HttpServletRequest request) {
+        Map<String, String[]> modifiedParameters = modifiedParameters(request, parameters);
+        Sort sort = parseSort(modifiedParameters);
+        Specification<Entity> specs = buildSpecification(modifiedParameters, getSearchFields());
         return getRepository().findAll(specs, sort);
     }
 
-    public Page<Entity> paginate(Map<String, String[]> parameters) {
-        int page = parameters.containsKey("page") ? Integer.parseInt(parameters.get("page")[0]) : 1;
-        int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
-        Sort sort = parseSort(parameters);
-        Specification<Entity> specs = buildSpecification(parameters, getSearchFields());
+    public Page<Entity> paginate(Map<String, String[]> parameters, HttpServletRequest request) {
+        Map<String, String[]> modifiedParameters = modifiedParameters(request, parameters);
+        int page = modifiedParameters.containsKey("page") ? Integer.parseInt(modifiedParameters.get("page")[0]) : 1;
+        int perpage = modifiedParameters.containsKey("perpage") ? Integer.parseInt(modifiedParameters.get("perpage")[0]) : 20;
+        Sort sort  = parseSort(modifiedParameters);
+        Specification<Entity> specs = buildSpecification(modifiedParameters, getSearchFields());
+
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
         return getRepository().findAll(specs, pageable);
     }
