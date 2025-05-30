@@ -19,12 +19,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.backend.mappers.BaseMapper;
 import com.example.backend.services.BaseServiceInterface;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -36,9 +38,12 @@ public abstract class BaseControllerTest<
     Repository extends JpaRepository<Entity, Long> & JpaSpecificationExecutor<Entity>, 
     Mapper extends BaseMapper<Entity, Resource, Create, Update>,
     Service extends BaseServiceInterface<Entity, Create, Update>
->{
+> {
     @Autowired
     protected MockMvc mockMvc;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     @MockBean
     protected Service service;
@@ -46,7 +51,11 @@ public abstract class BaseControllerTest<
     @MockBean
     protected Mapper mapper;
 
-    protected String getExpectedSuccessMessage() {
+    protected String getFetchSuccessMessage() {
+        return "SUCCESS";
+    }
+
+    protected String getCreateSuccessMessage() {
         return "SUCCESS";
     }
 
@@ -61,43 +70,41 @@ public abstract class BaseControllerTest<
     protected abstract List<Resource> createTestResources();
     protected abstract List<Resource> createTestResourcesByKeywordFiltered(List<Resource> resources, String keyword);
     protected abstract List<Resource> createTestResourcesBySimpleFiltered(List<Resource> resources, Map<String, String[]> filters);
+    protected abstract Create createTestCreateRequest();
+    protected abstract Create createInvalidTestCreateRequest();
 
     @Test
     void list_NoFilter_ShouldReturnAllRecords() throws Exception {
-        List<Entity> mockEntities = createTestEntities(); // Tạo mock dữ liệu entities
-        List<Resource> mockResources = createTestResources(); // Tạo mock dữ liệu resources
+        List<Entity> mockEntities = createTestEntities();
+        List<Resource> mockResources = createTestResources();
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, String[]>> captor = ArgumentCaptor.forClass(Map.class); // ArgumentCaptor để bắt tham số
+        ArgumentCaptor<Map<String, String[]>> captor = ArgumentCaptor.forClass(Map.class);
 
-        // Stub service và mapper
         when(service.getAll(captor.capture(), any(HttpServletRequest.class))).thenReturn(mockEntities);
         when(mapper.toListResource(mockEntities)).thenReturn(mockResources);
 
-        // Gửi request GET đến API
         mockMvc.perform(get(getApiPath() + "/list")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()) 
-                .andExpect(jsonPath("$.success").value(true)) 
-                .andExpect(jsonPath("$.message").value(getExpectedSuccessMessage())) 
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(getFetchSuccessMessage()))
                 .andExpect(jsonPath("$.status").value("OK"))
-                .andExpect(jsonPath("$.data").isArray()) 
-                .andExpect(jsonPath("$.timestamp").exists()) 
-                .andExpect(jsonPath("$.errors").doesNotExist()) 
-                .andExpect(jsonPath("$.error").doesNotExist()); 
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
 
-    
         verify(service).getAll(captor.capture(), any(HttpServletRequest.class));
         verify(mapper).toListResource(mockEntities);
 
-        Map<String, String[]> capturedParams = captor.getValue(); 
-        assertThat(capturedParams).isNotNull(); 
+        Map<String, String[]> capturedParams = captor.getValue();
+        assertThat(capturedParams).isNotNull();
         assertThat(capturedParams).isEmpty();
     }
 
     @Test
     void list_withKeywordFilter_ShouldReturnFilteredKeywordRecords() throws Exception {
-        // Tạo mock dữ liệu
         List<Entity> mockEntities = createTestEntities();
         List<Resource> mockResources = createTestResources();
         List<Entity> mockFilterEntities = createTestEntitiesByKeywordFiltered(mockEntities, getTestKeyword());
@@ -106,38 +113,33 @@ public abstract class BaseControllerTest<
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String[]>> captor = ArgumentCaptor.forClass(Map.class);
 
-        // Stub gọi service và mapper
         when(service.getAll(captor.capture(), any(HttpServletRequest.class))).thenReturn(mockFilterEntities);
         when(mapper.toListResource(mockFilterEntities)).thenReturn(mockFilterResources);
 
-        // Gửi request GET đến API
         ResultActions actions = mockMvc.perform(get(getApiPath() + "/list")
-                .param("keyword", getTestKeyword()) // Thêm keyword vào request
+                .param("keyword", getTestKeyword())
                 .contentType(MediaType.APPLICATION_JSON));
 
-        // Kiểm tra phản hồi từ API
         getExpectResponseData(actions, mockFilterResources)
-                .andExpect(status().isOk()) 
-                .andExpect(jsonPath("$.success").value(true)) 
-                .andExpect(jsonPath("$.message").value(getExpectedSuccessMessage())) 
-                .andExpect(jsonPath("$.status").value("OK")) 
-                .andExpect(jsonPath("$.data").isArray()) 
-                .andExpect(jsonPath("$.timestamp").exists()) 
-                .andExpect(jsonPath("$.errors").doesNotExist()) 
-                .andExpect(jsonPath("$.error").doesNotExist()); 
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(getFetchSuccessMessage()))
+                .andExpect(jsonPath("$.status").value("OK"))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
 
+        verify(service).getAll(captor.capture(), any(HttpServletRequest.class));
+        verify(mapper).toListResource(mockFilterEntities);
 
-        verify(service).getAll(captor.capture(), any(HttpServletRequest.class)); 
-        verify(mapper).toListResource(mockFilterEntities); 
-
-        Map<String, String[]> capturedParams = captor.getValue(); 
-        assertThat(capturedParams).isNotNull(); 
+        Map<String, String[]> capturedParams = captor.getValue();
+        assertThat(capturedParams).isNotNull();
         assertThat(capturedParams.get("keyword")).containsExactly(getTestKeyword());
     }
 
     @Test
     void list_withSimpleFilter_ShouldReturnSimpleFilteredRecords() throws Exception {
-        // Mock dữ liệu
         Map<String, String[]> filters = getTestSimpleFilter();
         List<Entity> mockEntities = createTestEntities();
         List<Resource> mockResources = createTestResources();
@@ -147,11 +149,9 @@ public abstract class BaseControllerTest<
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String[]>> captor = ArgumentCaptor.forClass(Map.class);
 
-    
         when(service.getAll(captor.capture(), any(HttpServletRequest.class))).thenReturn(mockFilterEntities);
         when(mapper.toListResource(mockFilterEntities)).thenReturn(mockFilterResources);
 
-     
         MockHttpServletRequestBuilder requestBuilder = get(getApiPath() + "/list");
         filters.forEach((key, values) -> {
             for (String value : values) {
@@ -164,7 +164,7 @@ public abstract class BaseControllerTest<
         getExpectResponseFilterData(actions, mockFilterResources)
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.message").value(getExpectedSuccessMessage()))
+            .andExpect(jsonPath("$.message").value(getFetchSuccessMessage()))
             .andExpect(jsonPath("$.status").value("OK"))
             .andExpect(jsonPath("$.data").isArray())
             .andExpect(jsonPath("$.timestamp").exists())
@@ -180,5 +180,60 @@ public abstract class BaseControllerTest<
 
         verify(service).getAll(eq(capturedParams), any(HttpServletRequest.class));
         verify(mapper).toListResource(mockFilterEntities);
+    }
+
+    @Test
+    void create_ShouldReturnCreatedRecord() throws Exception {
+        // Arrange
+        Create createRequest = createTestCreateRequest();
+        List<Entity> mockEntities = createTestEntities();
+        List<Resource> mockResources = createTestResources();
+        Entity mockEntity = mockEntities.get(0);
+        Resource mockResource = mockResources.get(0);
+
+        when(service.add(any(), any(Long.class))).thenReturn(mockEntity);
+        when(mapper.toResource(mockEntity)).thenReturn(mockResource);
+
+        // Act
+        ResultActions actions = mockMvc.perform(post(getApiPath())
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(createRequest)));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value(getCreateSuccessMessage()))
+            .andExpect(jsonPath("$.data.id").exists())
+            .andExpect(jsonPath("$.data.name").exists())
+            .andExpect(jsonPath("$.data.publish").exists())
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.error").doesNotExist());
+
+        verify(service).add(any(), any(Long.class));
+        verify(mapper).toResource(mockEntity);
+    }
+
+    @Test
+    void create_WithInvalidData_ShouldReturnUnprocessableEntity() throws Exception {
+        // Arrange
+        Create invalidRequest = createInvalidTestCreateRequest();
+
+        // Act
+        ResultActions actions = mockMvc.perform(post(getApiPath())
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(invalidRequest)));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errors").exists());
     }
 }

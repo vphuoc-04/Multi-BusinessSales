@@ -11,7 +11,11 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,7 +26,10 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.http.MediaType;
 
 import com.example.backend.configs.SecurityConfig;
 import com.example.backend.controllers.BaseControllerTest;
@@ -30,7 +37,9 @@ import com.example.backend.helpers.JwtAuthFilter;
 import com.example.backend.modules.users.controllers.UserCatalogueController;
 import com.example.backend.modules.users.entities.UserCatalogue;
 import com.example.backend.modules.users.mappers.UserCatalogueMapper;
+import com.example.backend.modules.users.repositories.PermissionRepository;
 import com.example.backend.modules.users.repositories.UserCatalogueRepository;
+import com.example.backend.modules.users.repositories.UserRepository;
 import com.example.backend.modules.users.requests.UserCatalogue.StoreRequest;
 import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
 import com.example.backend.modules.users.resources.UserCatalogueResource;
@@ -52,6 +61,33 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
     @MockBean
     private JwtService jwtService;
 
+    @MockBean
+    private UserCatalogueServiceInterface userCatalogueService;
+
+    @MockBean
+    private UserCatalogueRepository userCatalogueRepository;
+
+    @MockBean
+    private PermissionRepository permissionRepository;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private UserCatalogueMapper userCatalogueMapper;
+
+    @BeforeEach
+    public void setup() {
+        // Mock JWT validation to always return true for test token
+        when(jwtService.isTokenExpired("test-token")).thenReturn(false);
+        when(jwtService.isIssuerToken("test-token")).thenReturn(true);
+        when(jwtService.isSignatureToken("test-token")).thenReturn(true);
+        when(jwtService.isTokenFormatValid("test-token")).thenReturn(true);
+        when(jwtService.isBlacklistedToken("test-token")).thenReturn(false);
+        when(jwtService.getUserIdFromJwt("test-token")).thenReturn("1"); 
+    }
+
+
     @Override
     protected String getApiPath(){
         return "/api/v1/user_catalogue";
@@ -67,8 +103,13 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
     }
 
     @Override
-    protected String getExpectedSuccessMessage() {
+    protected String getFetchSuccessMessage() {
         return "User catalogue fetch success";
+    }
+
+    @Override
+    protected String getCreateSuccessMessage() {
+        return "User catalogue added successfully";
     }
 
     @Override
@@ -239,5 +280,83 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
         params.put("publish", new String[] {"1"});
 
         return params;
+    }
+
+    @Override
+    protected StoreRequest createTestCreateRequest() {
+        StoreRequest request = new StoreRequest();
+        request.setName("Nhóm Test");
+        request.setPublish(1);
+        request.setPermissions(Arrays.asList(1L, 2L));
+        request.setUsers(Arrays.asList(1L, 2L));
+        return request;
+    }
+
+    @Override
+    protected StoreRequest createInvalidTestCreateRequest() {
+        StoreRequest request = new StoreRequest();
+        request.setName("");
+        request.setPublish(null);
+        request.setPermissions(null);
+        request.setUsers(null);
+        return request;
+    }
+
+    @Test
+    public void testCreateUserCatalogue() throws Exception {
+        // Arrange
+        StoreRequest storeRequest = createTestCreateRequest();
+        UserCatalogue userCatalogue = UserCatalogue.builder()
+            .id(1L)
+            .name("Nhóm Test 1")
+            .publish(1)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        UserCatalogueResource userCatalogueResource = UserCatalogueResource.builder()
+            .id(1L)
+            .name("Nhóm Test 1")
+            .publish(1)
+            .build();
+
+        when(userCatalogueService.add(any(StoreRequest.class), any(Long.class))).thenReturn(userCatalogue);
+        when(userCatalogueMapper.toResource(any(UserCatalogue.class))).thenReturn(userCatalogueResource);
+
+        // Act
+        ResultActions result = mockMvc.perform(post(getApiPath())
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(storeRequest)));
+
+        // Assert
+        result.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("User catalogue added successfully"))
+            .andExpect(jsonPath("$.data.id").value(userCatalogueResource.getId()))
+            .andExpect(jsonPath("$.data.name").value(userCatalogueResource.getName()))
+            .andExpect(jsonPath("$.data.publish").value(userCatalogueResource.getPublish()))
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    @Test
+    public void testCreateUserCatalogue_WithInvalidData() throws Exception {
+        // Arrange
+        StoreRequest invalidRequest = createInvalidTestCreateRequest();
+
+        // Act
+        ResultActions result = mockMvc.perform(post(getApiPath())
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(invalidRequest)));
+
+        // Assert
+        result.andDo(print())
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errors").exists());
     }
 }
