@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.http.MediaType;
@@ -119,6 +120,11 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
     @Override
     protected String getUpdateSuccessMessage() {
         return "User catalogue edited successfully";
+    }
+
+    @Override
+    protected String getDeleteSuccessMessage() {
+        return "User catalogue deleted successfully";
     }
 
     @Override
@@ -472,5 +478,81 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+    }
+
+    @Test
+    public void testDeleteUserCatalogue() throws Exception {
+        // Arrange
+        Long catalogueId = 1L;
+        when(userCatalogueService.delete(catalogueId)).thenReturn(true);
+
+        // Act
+        ResultActions result = mockMvc.perform(delete(getApiPath() + "/" + catalogueId)
+                .header("Authorization", "Bearer test-token")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        result.andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User catalogue deleted successfully"))
+                .andExpect(jsonPath("$.status").value("OK"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    public void testDeleteUserCatalogue_NotFound() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(userCatalogueService.delete(nonExistentId)).thenReturn(false);
+
+        // Act
+        ResultActions result = mockMvc.perform(delete(getApiPath() + "/" + nonExistentId)
+                .header("Authorization", "Bearer test-token")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        result.andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+    }
+
+    @Test
+    public void testDeleteUserCatalogue_EntityNotFoundException() throws Exception {
+        // Arrange
+        Long catalogueId = 2L;
+        when(userCatalogueService.delete(catalogueId))
+                .thenThrow(new EntityNotFoundException("User catalogue not found with id: " + catalogueId));
+
+        // Act
+        ResultActions result = mockMvc.perform(delete(getApiPath() + "/" + catalogueId)
+                .header("Authorization", "Bearer test-token")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        result.andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+    }
+
+    @Test
+    public void testDeleteUserCatalogue_InternalServerError() throws Exception {
+        // Arrange
+        Long catalogueId = 3L;
+        when(userCatalogueService.delete(catalogueId))
+                .thenThrow(new RuntimeException("Database connection failed"));
+
+        // Act
+        ResultActions result = mockMvc.perform(delete(getApiPath() + "/" + catalogueId)
+                .header("Authorization", "Bearer test-token")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        result.andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value("INTERNAL_SERVER_ERROR"));
     }
 }

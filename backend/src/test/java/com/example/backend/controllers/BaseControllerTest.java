@@ -18,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -62,6 +64,10 @@ public abstract class BaseControllerTest<
     }
 
     protected String getUpdateSuccessMessage() {
+        return "SUCCESS";
+    }
+
+    protected String getDeleteSuccessMessage() {
         return "SUCCESS";
     }
 
@@ -326,5 +332,93 @@ public abstract class BaseControllerTest<
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+    }
+
+    // UNIT TEST: DELETE
+    @Test
+    void delete_ShouldReturnSuccess_WhenEntityExists() throws Exception {
+        // Arrange
+        Long id = 1L;
+        when(service.delete(id)).thenReturn(true);
+
+        // Act
+        ResultActions actions = mockMvc.perform(delete(getApiPath() + "/" + id)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value(getDeleteSuccessMessage()))
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.error").doesNotExist());
+
+        verify(service).delete(id);
+    }
+
+    @Test
+    void delete_ShouldReturnNotFound_WhenEntityDoesNotExist() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(service.delete(nonExistentId)).thenReturn(false);
+
+        // Act
+        ResultActions actions = mockMvc.perform(delete(getApiPath() + "/" + nonExistentId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+            .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(service).delete(nonExistentId);
+    }
+
+    @Test
+    void delete_ShouldReturnNotFound_WhenEntityNotFoundExceptionThrown() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(service.delete(nonExistentId)).thenThrow(new EntityNotFoundException("Entity not found"));
+
+        // Act
+        ResultActions actions = mockMvc.perform(delete(getApiPath() + "/" + nonExistentId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+            .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(service).delete(nonExistentId);
+    }
+
+    @Test
+    void delete_ShouldReturnInternalServerError_WhenUnexpectedExceptionOccurs() throws Exception {
+        // Arrange
+        Long id = 1L;
+        when(service.delete(id)).thenThrow(new RuntimeException("Unexpected error"));
+
+        // Act
+        ResultActions actions = mockMvc.perform(delete(getApiPath() + "/" + id)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.status").value("INTERNAL_SERVER_ERROR"))
+            .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(service).delete(id);
     }
 }
