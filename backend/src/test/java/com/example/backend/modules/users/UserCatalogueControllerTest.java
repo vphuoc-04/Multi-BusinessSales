@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.http.MediaType;
@@ -45,6 +47,8 @@ import com.example.backend.modules.users.requests.UserCatalogue.UpdateRequest;
 import com.example.backend.modules.users.resources.UserCatalogueResource;
 import com.example.backend.modules.users.services.interfaces.UserCatalogueServiceInterface;
 import com.example.backend.services.JwtService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @WebMvcTest(value = UserCatalogueController.class, excludeFilters= @ComponentScan.Filter(type=FilterType.ASSIGNABLE_TYPE, classes={JwtAuthFilter.class, SecurityConfig.class}))
 @AutoConfigureMockMvc(addFilters=false)
@@ -110,6 +114,11 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
     @Override
     protected String getCreateSuccessMessage() {
         return "User catalogue added successfully";
+    }
+
+    @Override
+    protected String getUpdateSuccessMessage() {
+        return "User catalogue edited successfully";
     }
 
     @Override
@@ -358,5 +367,110 @@ public class UserCatalogueControllerTest extends BaseControllerTest<
             .andExpect(status().isUnprocessableEntity())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.errors").exists());
+    }
+
+
+    @Override
+    protected UpdateRequest createTestUpdateRequest() {
+        UpdateRequest request = new UpdateRequest();
+        request.setName("Nhóm Test Update");
+        request.setPublish(1);
+        request.setPermissions(Arrays.asList(1L, 2L));
+        request.setUsers(Arrays.asList(1L, 2L));
+        return request;
+    }
+
+    @Override
+    protected UpdateRequest createInvalidTestUpdateRequest() {
+        UpdateRequest request = new UpdateRequest();
+        request.setName("");
+        request.setPublish(null);
+        request.setPermissions(null);
+        request.setUsers(null);
+        return request;
+    }
+
+    @Test
+    public void testUpdateUserCatalogue() throws Exception {
+        // Arrange
+        Long catalogueId = 1L;
+        UpdateRequest updateRequest = createTestUpdateRequest();
+        UserCatalogue updatedUserCatalogue = UserCatalogue.builder()
+            .id(catalogueId)
+            .name("Nhóm Test Updated")
+            .publish(1)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        UserCatalogueResource updatedResource = UserCatalogueResource.builder()
+            .id(catalogueId)
+            .name("Nhóm Test Updated")
+            .publish(1)
+            .build();
+
+        when(userCatalogueService.edit(eq(catalogueId), any(UpdateRequest.class), any(Long.class)))
+            .thenReturn(updatedUserCatalogue);
+        when(userCatalogueMapper.toResource(updatedUserCatalogue)).thenReturn(updatedResource);
+
+        // Act
+        ResultActions result = mockMvc.perform(put(getApiPath() + "/" + catalogueId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(updateRequest)));
+
+        // Assert
+        result.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("User catalogue edited successfully"))
+            .andExpect(jsonPath("$.data.id").value(updatedResource.getId()))
+            .andExpect(jsonPath("$.data.name").value(updatedResource.getName()))
+            .andExpect(jsonPath("$.data.publish").value(updatedResource.getPublish()))
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    @Test
+    public void testUpdateUserCatalogue_WithInvalidData() throws Exception {
+        // Arrange
+        Long catalogueId = 1L;
+        UpdateRequest invalidRequest = createInvalidTestUpdateRequest();
+
+        // Act
+        ResultActions result = mockMvc.perform(put(getApiPath() + "/" + catalogueId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(invalidRequest)));
+
+        // Assert
+        result.andDo(print())
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    public void testUpdateUserCatalogue_NotFound() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        UpdateRequest updateRequest = createTestUpdateRequest();
+
+        when(userCatalogueService.edit(eq(nonExistentId), any(UpdateRequest.class), any(Long.class)))
+            .thenThrow(new EntityNotFoundException("User catalogue not found"));
+
+        // Act
+        ResultActions result = mockMvc.perform(put(getApiPath() + "/" + nonExistentId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(updateRequest)));
+
+        // Assert
+        result.andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.status").value("NOT_FOUND"));
     }
 }

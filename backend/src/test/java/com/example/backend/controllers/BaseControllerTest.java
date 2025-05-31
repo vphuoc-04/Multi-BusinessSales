@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +29,7 @@ import com.example.backend.mappers.BaseMapper;
 import com.example.backend.services.BaseServiceInterface;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 public abstract class BaseControllerTest<
@@ -59,6 +61,10 @@ public abstract class BaseControllerTest<
         return "SUCCESS";
     }
 
+    protected String getUpdateSuccessMessage() {
+        return "SUCCESS";
+    }
+
     protected abstract String getApiPath();
     protected abstract String getTestKeyword();
     protected abstract Map<String, String[]> getTestSimpleFilter();
@@ -70,9 +76,14 @@ public abstract class BaseControllerTest<
     protected abstract List<Resource> createTestResources();
     protected abstract List<Resource> createTestResourcesByKeywordFiltered(List<Resource> resources, String keyword);
     protected abstract List<Resource> createTestResourcesBySimpleFiltered(List<Resource> resources, Map<String, String[]> filters);
+
     protected abstract Create createTestCreateRequest();
     protected abstract Create createInvalidTestCreateRequest();
 
+    protected abstract Update createTestUpdateRequest();
+    protected abstract Update createInvalidTestUpdateRequest();
+
+    // UNIT TEST: FETCH
     @Test
     void list_NoFilter_ShouldReturnAllRecords() throws Exception {
         List<Entity> mockEntities = createTestEntities();
@@ -182,6 +193,7 @@ public abstract class BaseControllerTest<
         verify(mapper).toListResource(mockFilterEntities);
     }
 
+    // UNIT TEST: CREATE
     @Test
     void create_ShouldReturnCreatedRecord() throws Exception {
         // Arrange
@@ -235,5 +247,84 @@ public abstract class BaseControllerTest<
             .andExpect(status().isUnprocessableEntity())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.errors").exists());
+    }
+
+    // UNIT TEST: UPDATE
+    @Test
+    void update_ShouldReturnUpdatedRecord() throws Exception {
+        // Arrange
+        Long id = 1L;
+        Update updateRequest = createTestUpdateRequest();
+        List<Entity> mockEntities = createTestEntities();
+        List<Resource> mockResources = createTestResources();
+        Entity mockEntity = mockEntities.get(0);
+        Resource mockResource = mockResources.get(0);
+
+        when(service.edit(eq(id), any(), any(Long.class))).thenReturn(mockEntity);
+        when(mapper.toResource(mockEntity)).thenReturn(mockResource);
+
+        // Act
+        ResultActions actions = mockMvc.perform(put(getApiPath() + "/" + id)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(updateRequest)));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value(getUpdateSuccessMessage()))
+            .andExpect(jsonPath("$.data.id").exists())
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.error").doesNotExist());
+
+        verify(service).edit(eq(id), any(), any(Long.class));
+        verify(mapper).toResource(mockEntity);
+    }
+
+    @Test
+    void update_WithInvalidData_ShouldReturnUnprocessableEntity() throws Exception {
+        // Arrange
+        Long id = 1L;
+        Update invalidRequest = createInvalidTestUpdateRequest();
+
+        // Act
+        ResultActions actions = mockMvc.perform(put(getApiPath() + "/" + id)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(invalidRequest)));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void update_WithNonExistentId_ShouldReturnNotFound() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        Update updateRequest = createTestUpdateRequest();
+
+        when(service.edit(eq(nonExistentId), any(), any(Long.class)))
+            .thenThrow(new EntityNotFoundException("Entity not found"));
+
+        // Act
+        ResultActions actions = mockMvc.perform(put(getApiPath() + "/" + nonExistentId)
+            .header("Authorization", "Bearer test-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .characterEncoding("UTF-8")
+            .content(objectMapper.writeValueAsString(updateRequest)));
+
+        // Assert
+        actions.andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.status").value("NOT_FOUND"));
     }
 }
