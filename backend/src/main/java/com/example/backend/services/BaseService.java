@@ -51,17 +51,36 @@ public abstract class BaseService <
     protected void setRelation(Entity entity, Long relationId) {}
     protected void preSave(Entity entity, Long addedBy, Long editedBy) {}
 
+    protected Map<String, RelationConfig> getNonOwningRelations() {
+        return new HashMap<>();
+    }
+
+    protected static class RelationConfig {
+        private final String owningEntityClassName;
+        private final String owningFieldName;
+
+        public RelationConfig(String owningEntityClassName, String owningFieldName) {
+            this.owningEntityClassName = owningEntityClassName;
+            this.owningFieldName = owningFieldName;
+        }
+
+        public String getOwningEntityClassName() {
+            return owningEntityClassName;
+        }
+
+        public String getOwningFieldName() {
+            return owningFieldName;
+        }
+    }
+
     @Transactional
     public Entity add(Create request, Long addedBy) {
         logger.info("Creating with addedBy: {}", addedBy);
         Entity payload = getMapper().toCreate(request);
-        Entity entity = getRepository().save(payload);
-
-        Long relationId = getRelationIdFromCreate(request);
-        if (relationId != null) { setRelation(payload, relationId); }
-        handleManyToManyRelations(entity, request);
-        preSave(payload, addedBy, null); 
-        return entity;
+        preSave(payload, addedBy, null);
+        Entity savedEntity = getRepository().save(payload);
+        handleManyToManyRelations(savedEntity, request);
+        return savedEntity;
     }
 
     @Transactional
@@ -69,12 +88,12 @@ public abstract class BaseService <
         Entity entity = getRepository().findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Not found"));
         getMapper().toUpdate(request, entity);
+        preSave(entity, null, editedBy);
+        handleManyToManyRelations(entity, request);
         Entity update = getRepository().save(entity);
 
         Long relationId = getRelationIdFromUpdate(request);
-        if (relationId != null) { setRelation(entity, relationId); }
-        handleManyToManyRelations(entity, request);
-        preSave(entity, null, editedBy);
+        if (relationId != null) { setRelation(entity, relationId); }    
         return update;
     }
 
@@ -122,8 +141,8 @@ public abstract class BaseService <
         int perpage = parameters.containsKey("perpage") ? Integer.parseInt(parameters.get("perpage")[0]) : 10;
         Sort sort = parseSort(parameters);
         Specification<Entity> baseSpec = buildSpecification(parameters, getSearchFields());
-        Specification<Entity> filterSpec = filterId != null ? 
-            (root, query, cb) -> cb.equal(root.get("catalogueId"), filterId) : 
+        Specification<Entity> filterSpec = filterId != null ?
+            (root, query, cb) -> cb.equal(root.get("catalogueId"), filterId) :
             null;
         Specification<Entity> finalSpec = filterSpec != null ? baseSpec.and(filterSpec) : baseSpec;
         Pageable pageable = PageRequest.of(page - 1, perpage, sort);
@@ -146,29 +165,65 @@ public abstract class BaseService <
 
     private void handleManyToManyRelations(Entity entity, Object request) {
         String[] relations = getRelations();
+        Map<String, RelationConfig> nonOwningRelations = getNonOwningRelations();
         if (relations != null && relations.length > 0) {
-            for(String relation: relations){
+            for (String relation : relations) {
                 try {
                     Field requestField = request.getClass().getDeclaredField(relation);
                     requestField.setAccessible(true);
                     @SuppressWarnings("unchecked")
                     List<Long> ids = (List<Long>) requestField.get(request);
-                    if(ids != null && !ids.isEmpty()){
-                        Field entityField = entity.getClass().getDeclaredField(relation);
-                        entityField.setAccessible(true);
-                        ParameterizedType setType = (ParameterizedType) entityField.getGenericType();
-                        Class<?> entityClass = (Class<?>) setType.getActualTypeArguments()[0];
-                        String repositoryName = entityClass.getSimpleName() + "Repository";
-                        repositoryName = Character.toLowerCase(repositoryName.charAt(0)) + repositoryName.substring(1);
-                        
-                        @SuppressWarnings("unchecked")
-                        JpaRepository<Entity, Long> repository = (JpaRepository<Entity, Long>) applicationContext.getBean(repositoryName);
-                        List<Entity> entities = repository.findAllById(ids);
-                        Set<Entity> entitySet = new HashSet<>(entities);
-                        entityField.set(entity, entitySet);
+                    if (ids != null && !ids.isEmpty()) {
+                        if (nonOwningRelations.containsKey(relation)) {
+                            RelationConfig config = nonOwningRelations.get(relation);
+                            Class<?> owningEntityClass = Class.forName("com.example.backend.modules.users.entities." + config.getOwningEntityClassName());
+                            String repositoryName = owningEntityClass.getSimpleName() + "Repository";
+                            repositoryName = Character.toLowerCase(repositoryName.charAt(0)) + repositoryName.substring(1);
+
+                            Object repositoryBean = applicationContext.getBean(repositoryName);
+                            JpaRepository<Object, Long> repository = (JpaRepository<Object, Long>) repositoryBean;
+
+                            List<Object> owningEntities = repository.findAllById(ids);
+
+                            Field owningField = owningEntityClass.getDeclaredField(config.getOwningFieldName());
+                            owningField.setAccessible(true);
+
+                            for (Object owningEntity : owningEntities) {
+                                @SuppressWarnings("unchecked")
+                                Set<Object> relatedEntities = (Set<Object>) owningField.get(owningEntity);
+                                if (relatedEntities == null) {
+                                    relatedEntities = new HashSet<>();
+                                    owningField.set(owningEntity, relatedEntities);
+                                }
+                                relatedEntities.add(entity);
+                            }
+
+                            repository.saveAll(owningEntities);
+                            logger.info("Assigned {} {} to entity via owning field: {}", owningEntities.size(), relation, config.getOwningFieldName());
+
+                            Field entityField = entity.getClass().getDeclaredField(relation);
+                            entityField.setAccessible(true);
+                            Set<Object> entitySet = new HashSet<>(owningEntities);
+                            entityField.set(entity, entitySet);
+                        } else {
+                            Field entityField = entity.getClass().getDeclaredField(relation);
+                            entityField.setAccessible(true);
+                            ParameterizedType setType = (ParameterizedType) entityField.getGenericType();
+                            Class<?> entityClass = (Class<?>) setType.getActualTypeArguments()[0];
+                            String repositoryName = entityClass.getSimpleName() + "Repository";
+                            repositoryName = Character.toLowerCase(repositoryName.charAt(0)) + repositoryName.substring(1);
+
+                            @SuppressWarnings("unchecked")
+                            JpaRepository<Object, Long> repository = (JpaRepository<Object, Long>) applicationContext.getBean(repositoryName);
+                            List<Object> entities = repository.findAllById(ids);
+                            Set<Object> entitySet = new HashSet<>(entities);
+                            entityField.set(entity, entitySet);
+                            logger.info("Assigned {} {} to entity", entitySet.size(), relation);
+                        }
+                    } else {
+                        logger.warn("No IDs provided for relation: {} in entity: {}", relation, entity.getClass().getSimpleName());
                     }
-                    
-                }catch ( NoSuchFieldException | ClassCastException | IllegalAccessException  e) {
+                } catch (NoSuchFieldException | ClassCastException | IllegalAccessException | ClassNotFoundException e) {
                     throw new RuntimeException("An error occurred while processing the relationship: " + relation + " " + e.getMessage(), e);
                 }
             }

@@ -85,4 +85,9 @@ public class UserCatalogue {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    @Override
+    public String toString() {
+        return "UserCatalogue{id=" + id + ", name=" + name + ", publish=" + publish + "}";
+    }
 }

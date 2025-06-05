@@ -1,8 +1,10 @@
 package com.example.backend.modules.users.services.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +43,14 @@ public class UserCatalogueService extends BaseService<
 
     @Override
     protected String[] getRelations() {
-        return new String[]{"permissions"};
+        return new String[]{"permissions", "users"};
+    }
+
+    @Override
+    protected Map<String, RelationConfig> getNonOwningRelations() {
+        Map<String, RelationConfig> nonOwningRelations = new HashMap<>();
+        nonOwningRelations.put("users", new RelationConfig("User", "userCatalogues"));
+        return nonOwningRelations;
     }
 
     @Override

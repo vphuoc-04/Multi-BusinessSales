@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -58,4 +58,9 @@ public class Permission {
     @ManyToMany(mappedBy="permissions")
     @JsonBackReference
     private Set<UserCatalogue> userCatalogues = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return "Permission{id=" + id + ", name=" + name + ", description=" + description + ", userId=" + userId + ", publish=" + publish + "}";
+    }
 }

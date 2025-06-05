@@ -79,6 +79,7 @@ public class ProductService extends BaseService<
     @Override
     @Transactional
     public Product add(StoreRequest request, MultipartFile[] images, Long addedBy) {
+        logger.info("Adding product with addedBy: {}", addedBy);
         Product product = super.add(request, addedBy); 
         return updateProductWithBrandAndImages(product, request.getBrandId(), images, addedBy);
     }
