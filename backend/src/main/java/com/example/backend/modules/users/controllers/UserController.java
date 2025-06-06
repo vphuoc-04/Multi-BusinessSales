@@ -26,7 +26,13 @@ import com.example.backend.modules.users.requests.User.StoreRequest;
 import com.example.backend.modules.users.requests.User.UpdateRequest;
 import com.example.backend.modules.users.resources.UserResource;
 import com.example.backend.modules.users.services.interfaces.UserServiceInterface;
+import com.example.backend.resources.ApiResource;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 @RestController
@@ -50,6 +56,23 @@ public class UserController extends BaseController<
         super(userService, userMapper, userRepository, PermissionEnum.USER);
         this.passwordEncoder = passwordEncoder;
     }
+
+    @Operation(
+        summary="API user information",
+        description = "Returns information of the currently logged in user"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode="200",
+            description="Success",
+            content=@Content(schema = @Schema(implementation = ApiResource.class))
+        ),
+        @ApiResponse(
+            responseCode="403",
+            description="Permission denied",
+            content=@Content(schema = @Schema(implementation = ApiResource.class))
+        )
+    })
 
     @Override
     protected StoreRequest preStore(StoreRequest request) {

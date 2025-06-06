@@ -25,10 +25,17 @@ import com.example.backend.resources.ApiResource;
 import com.example.backend.services.BaseServiceInterface;
 import com.example.backend.services.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+@SecurityRequirement(name="Bearer Authentication")
 public abstract class BaseController<
     Entity,
     Resource,
@@ -59,6 +66,28 @@ public abstract class BaseController<
     public PermissionEnum getPermissionEnum() {
         return permissionEnum;
     }
+
+    @Operation(
+        summary="",
+        description = ""
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode="200",
+            description="Success",
+            content=@Content(schema = @Schema(implementation = ApiResource.class))
+        ),
+        @ApiResponse(
+            responseCode="403",
+            description="Permission denied",
+            content=@Content(schema = @Schema(implementation = ApiResource.class))
+        ),
+        @ApiResponse(
+            responseCode="500",
+            description="An error occurred during processing",
+            content=@Content(schema = @Schema(implementation = ApiResource.class))
+        )
+    })
 
     @PostMapping
     // @RequirePermission(action = "store")
