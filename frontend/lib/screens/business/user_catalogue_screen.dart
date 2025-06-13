@@ -1,32 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/components/dashboard/category/product_added.dart';
 
 // Components
-import 'package:frontend/components/dashboard/category/product_category_data.dart';
+import 'package:frontend/components/business/catalogues/user_catalouge_data.dart';
+import 'package:frontend/components/business/catalogues/add_user.dart';
+import 'package:frontend/components/business/catalogues/user_belong_catalogue_data.dart';
 
 // Constants
 import 'package:frontend/constants/colors.dart';
 
 // Models
-import 'package:frontend/modules/products/models/product_category.dart';
+import 'package:frontend/modules/users/models/user_catalogue.dart';
 
 // Services
-import 'package:frontend/modules/products/services/product_category_service.dart';
+import 'package:frontend/modules/users/services/user_catalogue_service.dart';
 
 // Widgets
 import 'package:frontend/widgets/loading_widget.dart';
 
-class ProductCategoryScreen extends StatefulWidget {
+class UserCatalogueScreen extends StatefulWidget {
   @override
-  _ProductCategoryScreenState createState() => _ProductCategoryScreenState();
+  _UserCatalogueScreenState createState() => _UserCatalogueScreenState();
 }
 
-class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
-  final ProductCategoryService productCategoryService = ProductCategoryService();
+class _UserCatalogueScreenState extends State<UserCatalogueScreen> {
+  final UserCatalogueService userCatalogueService = UserCatalogueService();
 
   final TextEditingController nameController = TextEditingController();
 
-  List<ProductCategory> productCatagoriesList = [];
+  List<UserCatalogue> userCataloguesList = [];
 
   int publishStatus = 0;
 
@@ -35,15 +36,15 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   @override
   void initState() {
     super.initState();
-    fetchProductCategoryData();
+    fetchUserCatalogueData();
   }
 
-  // Add product category
-  Future<void> addProductCategory() async {
+  // Add user catalogue
+  Future<void> addUserCatalogue() async {
     final name = nameController.text;
 
     if (name.isEmpty) {
-      print("Name product category cannot be empty");
+      print("Name user catalogue cannot be empty");
       return;
     }
 
@@ -52,11 +53,11 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     });
 
     try {
-      final response = await productCategoryService.add(name, publishStatus);
+      final response = await userCatalogueService.add(name, publishStatus);
 
       if (response['success'] == true) {
-        print("New product category added successfully");
-        await fetchProductCategoryData();
+        print("New user catalogue added successfully");
+        await fetchUserCatalogueData();
       } else {
         print(response['message'] ?? "Failed to add group");
       }
@@ -70,17 +71,17 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     }
   }
 
-  // Fetch product category data
-  Future<void> fetchProductCategoryData() async {
+  // Fetch user catalogue data
+  Future<void> fetchUserCatalogueData() async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      final response = await productCategoryService.fetchProductCategory();
+      final response = await userCatalogueService.fetchUserCatalogue();
 
       setState(() {
-        productCatagoriesList = response;
+        userCataloguesList = response;
       });
 
     } catch (error) {
@@ -95,12 +96,11 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       setState(() {
         isLoading = false;
       });
-
     }
   }
 
-  // Update product category
-  void showUpdateDialog(ProductCategory group) {
+  // Update user catalogue
+  void showUpdateDialog(UserCatalogue group) {
     TextEditingController nameController = TextEditingController(text: group.name);
     int publishStatus = group.publish;
 
@@ -142,10 +142,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                   onPressed: () async {
                     setState(() { isLoading = true; }); 
 
-                    await productCategoryService.update(group.id, nameController.text, publishStatus);
+                    await userCatalogueService.update(group.id, nameController.text, publishStatus);
 
                     Navigator.pop(context);
-                    fetchProductCategoryData();
+                    fetchUserCatalogueData();
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: myColor),
                   child: isLoading
@@ -163,16 +163,16 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
-  // Delete product category
-  void showDeleteDialog(ProductCategory category) {
+  // Delete user catalogue
+  void showDeleteDialog(UserCatalogue group) {
     showDialog(
       context: context, 
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Delete Category"),
-              content: Text("Are you sure you want to delete the category ${category.name}?"),
+              title: Text("Delete Group"),
+              content: Text("Are you sure you want to delete the group ${group.name}?"),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -182,10 +182,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                   onPressed: () async {
                     setState(() { isLoading = true; }); 
 
-                    await productCategoryService.delete(category.id);
+                    await userCatalogueService.delete(group.id);
 
                     Navigator.pop(context);
-                    fetchProductCategoryData();
+                    fetchUserCatalogueData();
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: myColor),
                   child: isLoading
@@ -206,6 +206,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: myColor),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: Column(
@@ -213,14 +221,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [ 
               SizedBox(height: 50),
-              Text("Product category"),
+              Text("User catalogue"),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: nameController,
                       decoration: InputDecoration(
-                        labelText: "Product category name" 
+                        labelText: "User catalogue name" 
                       ),
                     ),
                   ),
@@ -241,7 +249,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  addProductCategory();
+                  addUserCatalogue();
                 }, 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: myColor
@@ -261,20 +269,28 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                   ? Center(
                       child: LoadingWidget(size: 20, color: myColor),
                     )
-                  : ProductCategoryData(
-                      productCatagoriesList: productCatagoriesList,
+                  : UserCatalougeData(
+                      userCataloguesList: userCataloguesList,
                       showUpdateDialog: showUpdateDialog,
                       showDeleteDialog: showDeleteDialog,
-                      onTapAddProductToCategory: (ProductCategory category) {
+                      onTapCatalogue: (UserCatalogue catalogue) {
                         Navigator.push(
-                          context, 
+                          context,
                           MaterialPageRoute(
-                            builder: (context) => ProductAdded(productCategoryId: category.id),
-                          )
+                            builder: (context) => UserBelongCatalogueData(catalogue: catalogue),
+                          ),
+                        );
+                      },
+                      ontTapAddUserToCatalogue: (UserCatalogue cataloge) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddUser(catalogueId: cataloge.id)
+                          ),
                         );
                       },
                     ), 
-            ),
+              ),
             ],
           )
         ),

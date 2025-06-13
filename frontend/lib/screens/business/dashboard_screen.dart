@@ -9,14 +9,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            children: [
-              Text("Dashboard")
-            ],
-          ),
-        )
+      appBar: AppBar(
+        title: Text("Dashboard"),
       ),
     );
   }

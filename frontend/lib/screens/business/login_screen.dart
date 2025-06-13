@@ -10,11 +10,11 @@ import 'package:frontend/tokens/token.dart';
 import 'package:frontend/modules/users/auth/auth.dart';
 
 // Screens
-import 'package:frontend/screens/dashboard/layout_screen.dart';
+import 'package:frontend/screens/business/layout_screen.dart';
 
 // Components
-import 'package:frontend/components/dashboard/login/login_button.dart';
-import 'package:frontend/components/dashboard/login/login_input.dart';
+import 'package:frontend/components/business/logins/login_button.dart';
+import 'package:frontend/components/business/logins/login_input.dart';
 
 class LoginScreen extends StatefulWidget{
   @override

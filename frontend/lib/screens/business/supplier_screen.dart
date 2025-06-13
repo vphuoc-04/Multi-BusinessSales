@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // Components
-import 'package:frontend/components/dashboard/supplier/supplier_data.dart';
+import 'package:frontend/components/business/suppliers/supplier_data.dart';
 
 // Constants
 import 'package:frontend/constants/colors.dart';
@@ -141,6 +141,14 @@ class _SupplierScreenState extends State<SupplierScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: myColor),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: Column(

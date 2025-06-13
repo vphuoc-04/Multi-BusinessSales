@@ -15,16 +15,16 @@ import 'package:frontend/modules/products/models/product_brand.dart';
 import 'package:frontend/modules/products/services/product_brand_service.dart';
 import 'package:frontend/modules/products/services/product_service.dart';
 
-class ProductAdded extends StatefulWidget {
+class AddProduct extends StatefulWidget {
   final int productCategoryId;
 
-  ProductAdded({required this.productCategoryId});
+  AddProduct({required this.productCategoryId});
 
   @override
   _ProductAddedState createState() => _ProductAddedState();
 }
 
-class _ProductAddedState extends State<ProductAdded> {
+class _ProductAddedState extends State<AddProduct> {
   final ProductService productService = ProductService();
   final ProductBrandService productBrandService = ProductBrandService();
   final TextEditingController productCodeController = TextEditingController();

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 // Screens
-import 'package:frontend/screens/dashboard/login_screen.dart';
-import 'package:frontend/screens/dashboard/layout_screen.dart';
+import 'package:frontend/screens/business/layout_screen.dart';
+import 'package:frontend/screens/business/login_screen.dart';
 
-class DashboardApp extends StatelessWidget {
+class BusinessApp extends StatelessWidget {
   final String initialRoute;
   final int? id;
 
-  const DashboardApp({
-    super.key, 
-    required this.initialRoute, 
-    this.id
+  const BusinessApp({
+    super.key,
+    required this.initialRoute,
+    this.id,
   });
 
   @override
@@ -20,7 +20,7 @@ class DashboardApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
       routes: {
-        '/dashboard/login': (context) => LoginScreen(),
+        '/login': (context) => LoginScreen(),
         '/dashboard': (context) => id == null ? LoginScreen() : LayoutScreen(id: id!)
       },
     );

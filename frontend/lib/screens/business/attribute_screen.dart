@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 // Components
-import 'package:frontend/components/dashboard/attribute/attribute_data.dart';
-import 'package:frontend/components/dashboard/attribute/attribute_value_added.dart';
-import 'package:frontend/components/dashboard/attribute/attribute_value_belong_attribute_data.dart';
+import 'package:frontend/components/business/attributes/attribute_data.dart';
+import 'package:frontend/components/business/attributes/add_attribute_value.dart';
+import 'package:frontend/components/business/attributes/attribute_value_belong_attribute_data.dart';
 
 // Constants
 import 'package:frontend/constants/colors.dart';
@@ -147,6 +147,14 @@ class _AttributeScreenState extends State<AttributeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: myColor),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: Column(
@@ -188,7 +196,7 @@ class _AttributeScreenState extends State<AttributeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AttributeValueAdded(attributeId: attribute.id)
+                              builder: (context) => AddAttributeValue(attributeId: attribute.id)
                             )
                           );
                         },

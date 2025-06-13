@@ -9,16 +9,16 @@ import 'package:frontend/modules/users/services/user_service.dart';
 // Widgets
 import 'package:frontend/widgets/loading_widget.dart';
 
-class UserAdded extends StatefulWidget {
+class AddUser extends StatefulWidget {
   final int catalogueId;
 
-  UserAdded({required this.catalogueId});
+  AddUser({required this.catalogueId});
 
   @override
   _UserAddedState createState() => _UserAddedState();
 }
 
-class _UserAddedState extends State<UserAdded> {
+class _UserAddedState extends State<AddUser> {
   final UserService userService = UserService();
 
   final TextEditingController firstNameController = TextEditingController();

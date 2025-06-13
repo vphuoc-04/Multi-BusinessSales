@@ -9,16 +9,16 @@ import 'package:frontend/modules/attributes/services/attribute_value_service.dar
 // Widgets
 import 'package:frontend/widgets/loading_widget.dart';
 
-class AttributeValueAdded extends StatefulWidget {
+class AddAttributeValue extends StatefulWidget {
   final int attributeId;
 
-  AttributeValueAdded({required this.attributeId});
+  AddAttributeValue({required this.attributeId});
 
   @override
   _AttributeValueAddedState createState() => _AttributeValueAddedState();
 }
 
-class _AttributeValueAddedState extends State<AttributeValueAdded> {
+class _AttributeValueAddedState extends State<AddAttributeValue> {
   final AttributeValueService attributeValueService = AttributeValueService();
   final TextEditingController valueController = TextEditingController();
 

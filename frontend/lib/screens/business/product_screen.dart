@@ -352,7 +352,14 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products")),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: myColor),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: isLoading
           ? Center(child: LoadingWidget(color: myColor, size: 20))
           : ListView.builder(
@@ -382,22 +389,33 @@ class _ProductScreenState extends State<ProductScreen> {
                             itemCount: product.imageUrls.length,
                             itemBuilder: (context, imgIndex) {
                               return Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.asset(
-                                    product.imageUrls[imgIndex].startsWith("/")
-                                        ? product.imageUrls[imgIndex].substring(1)
-                                        : product.imageUrls[imgIndex],
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(Icons.image_not_supported, size: 100, color: Colors.grey);
-                                    },
-                                  ),
+                              padding: EdgeInsets.symmetric(horizontal: 4.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  product.imageUrls[imgIndex].replaceFirst(RegExp(r'^/'), ''),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                    if (wasSynchronouslyLoaded || frame != null) {
+                                      return child; // Ảnh đã load xong
+                                    } else {
+                                      return Container(
+                                        width: 100,
+                                        height: 100,
+                                        alignment: Alignment.center,
+                                        child: LoadingWidget(size: 30, color: Colors.blue), // hoặc tùy chọn size/color
+                                      );
+                                    }
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(Icons.image_not_supported, size: 100, color: Colors.grey);
+                                  },
                                 ),
-                              );
+                              ),
+                            );
+
                             },
                           ),
                         ),

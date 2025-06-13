@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 
-
 // Constants
 import 'package:frontend/constants/colors.dart';
 
@@ -122,6 +121,14 @@ class _ProductBrandScreenState extends State<ProductBrandScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: myColor),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: Column(
