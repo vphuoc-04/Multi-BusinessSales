@@ -30,13 +30,23 @@ class AttributeValueRepository {
     );
   }
 
-  // Get attribute
+  // Get attribute value
   Future<dynamic> get(int attributeId, { required String token }) {
     return api.get(
       'attribute_value/$attributeId', 
       headers: {
         'Authorization': 'Bearer $token'
       } 
+    );
+  }
+
+  // Get by attribute id
+  Future<dynamic> getByAttributeId(int attributeId, { required String token }) {
+    return api.get(
+      'attribute_value/by_attribute/$attributeId',
+      headers: {
+        'Authorization': 'Bearer $token'
+      }
     );
   }
 

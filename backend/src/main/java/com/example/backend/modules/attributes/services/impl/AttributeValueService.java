@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +16,8 @@ import com.example.backend.modules.attributes.requests.AttributeValue.StoreReque
 import com.example.backend.modules.attributes.requests.AttributeValue.UpdateRequest;
 import com.example.backend.modules.attributes.services.interfaces.AttributeValueServiceInterface;
 import com.example.backend.services.BaseService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class AttributeValueService extends BaseService<
@@ -76,6 +77,19 @@ public class AttributeValueService extends BaseService<
         Attribute attribute = attributeRepository.findById(relationId)
             .orElseThrow(() -> new IllegalArgumentException("Attribute with ID " + relationId + " not found"));
         entity.setAttribute(attribute); 
+    }
+
+    @Override
+    public AttributeValue add(StoreRequest request, Long userId) {
+        Attribute attribute = attributeRepository.findById(request.getAttributeId())
+            .orElseThrow(() -> new EntityNotFoundException("Attribute id not found: " + request.getAttributeId()));
+
+        AttributeValue attributeValue = attributeValueMapper.toCreate(request);
+            attributeValue.setAttribute(attribute);
+            attributeValue.setAddedBy(userId);     
+        logger.info("Set addedBy of attribute value: {}", userId);
+
+        return attributeValueRepository.save(attributeValue);
     }
 
     @Override

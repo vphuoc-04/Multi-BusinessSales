@@ -103,6 +103,62 @@ class ProductService {
     }
   }
 
+  // Fetch product by categoryId
+  Future<List<Product>> fetchProductByCategory(int categoryId) async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await productRepository.getByCategoryId(categoryId, token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<dynamic> products = data['data']['content'];
+        
+        return products.map((product) => Product.fromJson(product)).toList();
+      } else if (response.statusCode == 401) {
+        bool refreshToken = await auth.refreshToken();
+        if (refreshToken) {
+          return fetchProducts();
+        }
+      }
+      throw Exception('Failed to load products!');
+    } catch (error) {
+      throw Exception('Error fetching products: $error');
+    }
+  }
+
+  // Fetch product by categoryId
+  Future<List<Product>> fetchProductByName(String name) async {
+    String? token = await Token.loadToken();
+
+    if (token == null) {
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await productRepository.getProductByName(name, token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<dynamic> products = data['data']['content'];
+        
+        return products.map((product) => Product.fromJson(product)).toList();
+      } else if (response.statusCode == 401) {
+        bool refreshToken = await auth.refreshToken();
+        if (refreshToken) {
+          return fetchProducts();
+        }
+      }
+      throw Exception('Failed to load products!');
+    } catch (error) {
+      throw Exception('Error fetching products: $error');
+    }
+  }
+
   // Update product
   Future<Map<String, dynamic>> update({
     required int id,

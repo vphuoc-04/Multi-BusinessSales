@@ -84,21 +84,31 @@ class AttributeValueService {
     }
 
     try {
-      final response = await attributeValueRepositoy.get(attributeId, token: token);
+      final response = await attributeValueRepositoy.getByAttributeId(attributeId, token: token);
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final decoded = json.decode(response.body);
+        print("API Response: $decoded");
 
-        print("API Response: $data");
+        final rawData = decoded['data'];
 
-        List<dynamic> content = data['data'];
+        if (rawData is List) {
+          return rawData.map((item) => AttributeValue.fromJson(item)).toList();
 
-        return content.map((item) => AttributeValue.fromJson(item)).toList();
+        } else if (rawData is Map<String, dynamic>) {
+          return [AttributeValue.fromJson(rawData)];
+
+        } else {
+          throw Exception('Unexpected response format: "data" is neither List nor Map');
+
+        }
       } else if (response.statusCode == 401) {
         bool refreshToken = await auth.refreshToken();
         if (refreshToken) {
           return fetchAttributeValues(attributeId);
         }
       }
+
       throw Exception('Failed to fetch attribute values!');
     } catch (error) {
       throw Exception("Error: $error");

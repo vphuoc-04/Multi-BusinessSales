@@ -126,6 +126,26 @@ class ProductRepository {
     );
   }
 
+  // Fetch product by categoryId
+  Future<dynamic> getByCategoryId(int categoryId, {required String token}) {
+    return api.get(
+      'product?productCategoryId=$categoryId',
+      headers: {
+        'Authorization': 'Bearer $token',
+      }
+    );
+  }
+
+  // Get product by name
+  Future<dynamic> getProductByName(String name, {required String token}) {
+    return api.get(
+      'product?keyword=$name',
+      headers: {
+        'Authorization': 'Bearer $token',
+      }
+    );
+  }
+
   // Delete product
   Future<dynamic> delete(int id, {required String token}) {
     return api.delete(
