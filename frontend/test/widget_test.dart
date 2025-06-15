@@ -10,11 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 // Apps
 import 'package:frontend/apps/business_app.dart';
+import 'package:frontend/apps/admin_panel_app.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const BusinessApp(initialRoute: '/login',));
+    await tester.pumpWidget(const AdminPanelApp(initialRoute: '/admin_panel/login',));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
