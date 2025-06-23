@@ -4,19 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants/colors.dart';
 
 // Screens
-import 'package:frontend/screens/admins/layout_screen.dart';
-import 'package:frontend/screens/admins/login_screen.dart';
+import 'package:frontend/screens/admin-screens/layout_screen.dart';
+import 'package:frontend/screens/admin-screens/login_screen.dart';
 
 
 class AdminPanelApp extends StatelessWidget {
 
   final String initialRoute;
   final int? id;
+  final String? firstName;
 
   const AdminPanelApp({
     super.key,
     required this.initialRoute,
     this.id,
+    this.firstName
   });
 
   @override
@@ -25,18 +27,21 @@ class AdminPanelApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
-          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+          backgroundColor: Colors.white,
           foregroundColor: myColor,
           elevation: 0,
-          scrolledUnderElevation: 0, 
-          surfaceTintColor: Colors.transparent, 
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 70,
+          toolbarHeight: 100, 
         ),
       ),
       routes: {
         '/admin_panel/login': (context) => LoginScreen(),
-        '/admin_panel/dashboard': (context) => id == null ? LoginScreen() : LayoutScreen(id: id!)
+        '/admin_panel/dashboard': (context) 
+          => id == null ? LoginScreen() : LayoutScreen(id: id!, firstname: firstName,)
       },
     );
   }

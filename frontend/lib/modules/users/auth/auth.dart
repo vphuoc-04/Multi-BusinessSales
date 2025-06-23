@@ -38,7 +38,7 @@ class Auth {
 
       print("Tokenid: $token");
       print("Refresh token: $refreshToken");
-      print("User id: ${user['']}");
+      print("User id: ${user['id']}");
 
       final sharedPrefs = await SharedPreferences.getInstance();
       await sharedPrefs.setString('token', token);
@@ -50,7 +50,8 @@ class Auth {
         'token': token,
         'refreshToken': refreshToken,
         'user': {
-          'id': user['id']
+          'id': user['id'],
+          'firstName': user['firstName'],
         },
       };
     } else {

@@ -12,7 +12,7 @@ class ProductRepository {
     int productCategoryId,
     String name,
     double price,
-    int brandId,
+    int? brandId,
     List<File>? images, {
     required String token,
   }) async {
@@ -21,7 +21,7 @@ class ProductRepository {
       'productCategoryId': productCategoryId.toString(),
       'name': name,
       'price': price.toString(),
-      'brandId': brandId.toString(),
+      if (brandId != null) 'brandId': brandId.toString(),
     };
 
     print("📤 Sending Fields: $fields");
@@ -67,7 +67,7 @@ class ProductRepository {
     int productCategoryId,
     String name,
     double price,
-    int brandId,
+    int? brandId,
     List<File>? images, {
     required String token,
   }) async {
@@ -76,7 +76,7 @@ class ProductRepository {
       'productCategoryId': productCategoryId.toString(),
       'name': name,
       'price': price.toString(),
-      'brandId': brandId.toString(),
+      if (brandId != null) 'brandId': brandId.toString(),
     };
 
     print("📤 Sending Fields: $fields");

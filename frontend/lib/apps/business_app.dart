@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants/colors.dart';
 
 // Screens
-import 'package:frontend/screens/business/layout_screen.dart';
-import 'package:frontend/screens/business/login_screen.dart';
+import 'package:frontend/screens/business-screens/layout_screen.dart';
+import 'package:frontend/screens/business-screens/login_screen.dart';
 
 class BusinessApp extends StatelessWidget {
   final String initialRoute;

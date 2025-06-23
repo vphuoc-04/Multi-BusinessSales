@@ -21,7 +21,7 @@ class ProductService {
     required int productCategoryId,
     required String name,
     required double price,
-    required int brandId,
+    int? brandId,
     List<File>? images,
   }) async {
     String? token = await Token.loadToken();
@@ -166,7 +166,7 @@ class ProductService {
     required int productCategoryId,
     required String name,
     required double price,
-    required int brandId,
+    int? brandId,
     List<File>? images,
   }) async {
     String? token = await Token.loadToken();
