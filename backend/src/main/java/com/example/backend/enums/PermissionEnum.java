@@ -8,9 +8,11 @@ public enum PermissionEnum {
     PRODUCT_CATEGORY("product_categories"),
     ATTRIBUTE("attributes"),
     ATTRIBUTE_VALUE("attribute_values"),
-    PERMISSION("permissions");
+    PERMISSION("permissions"),
+    ORDER("orders"),
+    ORDER_ITEM("order_items"),
+    ORDER_ITEM_ATTRIBUTE("order_item_attribute");
     
-
     private final String prefix;
 
     PermissionEnum(String prefix) {
