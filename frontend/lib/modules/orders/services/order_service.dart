@@ -7,22 +7,32 @@ class OrderService {
   final OrderRepository orderRepository = OrderRepository();
   final Auth auth = Auth();
 
-  Future<Map<String, dynamic>> add(int userId, double totalAmount, List<Map<String, dynamic>> items) async {
+  Future<Map<String, dynamic>> add({
+    required int userId,
+    required double totalAmount,
+    required List<Map<String, dynamic>> items,
+  }) async {
     String? token = await Token.loadToken();
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await orderRepository.add(userId, totalAmount, items, token: token);
+      final response = await orderRepository.add(
+        userId: userId,
+        totalAmount: totalAmount,
+        items: items,
+        token: token,
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print("Order added: $data");
         return data;
       } else if (response.statusCode == 401) {
-        if (await auth.refreshToken()) return add(userId, totalAmount, items);
+        if (await auth.refreshToken()) {
+          return add(userId: userId, totalAmount: totalAmount, items: items);
+        }
       }
 
-      print("Add order failed: ${response.body}");
       return { 'success': false, 'message': 'Add order failed!' };
     } catch (error) {
       throw Exception("Error: $error");
@@ -38,13 +48,17 @@ class OrderService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print("Fetched order data: $data");
+
         return data['data']['content'];
       } else if (response.statusCode == 401) {
         if (await auth.refreshToken()) return fetch();
       }
 
+      print("Fetch orders failed: ${response.body}");
       throw Exception("Fetch orders failed!");
     } catch (error) {
+      print("Error in fetch(): $error");
       throw Exception("Error: $error");
     }
   }
@@ -54,8 +68,7 @@ class OrderService {
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await orderRepository.update(id, status, token: token);
-
+      final response = await orderRepository.update(id: id, status: status, token: token);
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {
@@ -73,8 +86,7 @@ class OrderService {
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await orderRepository.delete(id, token: token);
-
+      final response = await orderRepository.delete(id: id, token: token);
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {

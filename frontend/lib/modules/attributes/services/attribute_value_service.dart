@@ -77,6 +77,45 @@ class AttributeValueService {
   }
 
   // Fetch attribute value by attribute
+  Future<List<AttributeValue>> fetchById(int attributeId) async {
+    String? token = await Token.loadToken();
+    if (token == null) {
+      throw Exception('Token is null. Please log in again.');
+    }
+
+    try {
+      final response = await attributeValueRepositoy.get(attributeId, token: token);
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        print("API Response: $decoded");
+
+        final rawData = decoded['data'];
+
+        if (rawData is List) {
+          return rawData.map((item) => AttributeValue.fromJson(item)).toList();
+
+        } else if (rawData is Map<String, dynamic>) {
+          return [AttributeValue.fromJson(rawData)];
+
+        } else {
+          throw Exception('Unexpected response format: "data" is neither List nor Map');
+
+        }
+      } else if (response.statusCode == 401) {
+        bool refreshToken = await auth.refreshToken();
+        if (refreshToken) {
+          return fetchAttributeValues(attributeId);
+        }
+      }
+
+      throw Exception('Failed to fetch attribute values!');
+    } catch (error) {
+      throw Exception("Error: $error");
+    }
+  }
+
+  // Fetch attribute value by attribute
   Future<List<AttributeValue>> fetchAttributeValues(int attributeId) async {
     String? token = await Token.loadToken();
     if (token == null) {

@@ -7,17 +7,38 @@ class OrderItemService {
   final OrderItemRepository repository = OrderItemRepository();
   final Auth auth = Auth();
 
-  Future<Map<String, dynamic>> add(int orderId, int productId, int quantity, double unitPrice, List<int> attributeValueIds) async {
+  Future<Map<String, dynamic>> add({
+    required int orderId,
+    required int productId,
+    required int quantity,
+    required double unitPrice,
+    List<int>? attributeValueIds,
+  }) async {
     String? token = await Token.loadToken();
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await repository.add(orderId, productId, quantity, unitPrice, attributeValueIds, token: token);
+      final response = await repository.add(
+        orderId: orderId,
+        productId: productId,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        attributeValueIds: attributeValueIds ?? [],
+        token: token,
+      );
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {
-        if (await auth.refreshToken()) return add(orderId, productId, quantity, unitPrice, attributeValueIds);
+        if (await auth.refreshToken()) {
+          return add(
+            orderId: orderId,
+            productId: productId,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            attributeValueIds: attributeValueIds,
+          );
+        }
       }
 
       return { 'success': false, 'message': 'Add order item failed!' };
@@ -26,17 +47,20 @@ class OrderItemService {
     }
   }
 
-  Future<Map<String, dynamic>> update(int id, int quantity, double unitPrice) async {
+  Future<Map<String, dynamic>> update({
+    required int id,
+    required int quantity,
+    required double unitPrice,
+  }) async {
     String? token = await Token.loadToken();
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await repository.update(id, quantity, unitPrice, token: token);
-
+      final response = await repository.update(id: id, quantity: quantity, unitPrice: unitPrice, token: token);
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {
-        if (await auth.refreshToken()) return update(id, quantity, unitPrice);
+        if (await auth.refreshToken()) return update(id: id, quantity: quantity, unitPrice: unitPrice);
       }
 
       return { 'success': false, 'message': 'Update order item failed!' };
@@ -50,8 +74,7 @@ class OrderItemService {
     if (token == null) throw Exception("Token is null.");
 
     try {
-      final response = await repository.delete(id, token: token);
-
+      final response = await repository.delete(id: id, token: token);
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {
